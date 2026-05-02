@@ -208,7 +208,7 @@ def client_detail(request, client_id):
     for interaction in interactions:
         log_entries.append({
             'type': 'interaction',
-            'subtype': interaction.interaction_type,
+            'subtype': interaction.interaction_type.name.lower() if interaction.interaction_type else 'comment',
             'date_time': interaction.date_time,
             'subject': interaction.subject,
             'note': interaction.note,
@@ -288,7 +288,16 @@ def create_interaction(request, client_id):
     
     client = get_object_or_404(Client, pk=client_id)
     
-    interaction_type = request.POST.get('type', 'comment')
+    # Получаем тип взаимодействия из форм данных
+    interaction_type_name = request.POST.get('type', 'comment')
+    
+    # Находим или создаем тип взаимодействия
+    from interactions.models import InteractionType
+    interaction_type, created = InteractionType.objects.get_or_create(
+        name=interaction_type_name.capitalize(),
+        defaults={'icon': '💬', 'color': '#00dbe9'}
+    )
+    
     content = request.POST.get('content', '')
     subject = request.POST.get('subject', '')
     
@@ -303,10 +312,11 @@ def create_interaction(request, client_id):
         note=content,
         date_time=timezone.now(),
         created_by=request.user,
+        status='COMPLETED',
     )
     
     # Если это задача, создаем Task
-    if interaction_type == 'task':
+    if interaction_type_name == 'task':
         Task.objects.create(
             title=subject or content[:100],
             client=client,
