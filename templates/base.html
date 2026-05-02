@@ -44,7 +44,7 @@
             <span class="material-symbols-outlined">dashboard</span>
             Обзор
         </a>
-        <a href="{% url 'core:client_list' %}" class="sidebar-item {% if 'client' in request.resolver_match.url_name or 'enrollment' in request.resolver_match.url_name %}active{% endif %}">
+        <a href="{% url 'core:client_list' %}" class="sidebar-item {% if 'client' in request.resolver_match.url_name and 'enrollment' not in request.resolver_match.url_name %}active{% endif %}">
             <span class="material-symbols-outlined">people</span>
             Клиенты
         </a>
