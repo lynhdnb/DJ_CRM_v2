@@ -183,11 +183,21 @@ def client_detail(request, client_id):
     total_payments = payments.aggregate(total=Sum('amount'))
     total_payments_amount = total_payments['total'] if total_payments['total'] else 0
     
+    # Записи на курсы
+    enrollments = client.enrollments.select_related('course', 'assigned_teacher').order_by('-created_at')
+    active_enrollments = enrollments.filter(status='ACTIVE')
+    
+    # Контактные лица
+    contacts = client.additional_contacts.all()
+    
     context = {
         'client': client,
-        'interactions': client.interactions.all().order_by('-date_time')[:20],
-        'payments': payments[:10],
-        'lessons': client.lessons.all().order_by('-start_time')[:10],
+        'interactions': client.interactions.all().order_by('-date_time')[:10],
+        'payments': payments[:5],
+        'lessons': client.lessons.all().order_by('-start_time')[:5],
+        'enrollments': enrollments[:10],
+        'active_enrollments': active_enrollments,
+        'contacts': contacts,
         'total_payments_amount': total_payments_amount,
     }
     

@@ -5,10 +5,17 @@
 {% block content %}
     <div class="page-header">
         <div>
-            <h1>👤 {{ client.last_name }} {{ client.first_name }}</h1>
-            <p>{{ client.get_status_display }} • с {{ client.created_at|date:"d.m.Y" }}</p>
+            <h1>👤 {{ client.last_name }} {{ client.first_name }} {% if client.middle_name %}{{ client.middle_name }}{% endif %}</h1>
+            <p>
+                <span class="status-badge status-{{ client.status|lower }}">{{ client.get_status_display }}</span>
+                • с {{ client.created_at|date:"d.m.Y" }}
+                {% if client.email %}• {{ client.email }}{% endif %}
+            </p>
         </div>
         <div class="page-actions">
+            <a href="tel:{{ client.phone }}" class="btn-secondary" title="Позвонить">
+                <span class="material-symbols-outlined">call</span>
+            </a>
             <a href="{% url 'core:client_update' client.pk %}" class="btn-secondary">
                 <span class="material-symbols-outlined">edit</span>
                 Редактировать
@@ -20,80 +27,167 @@
         </div>
     </div>
 
-    <!-- Основная информация -->
+    <!-- Bento Grid -->
     <div class="bento-grid">
+        <!-- Основная информация -->
         <div class="glass-card bento-item wide">
             <div class="section-header">
                 <h3>📋 Информация о клиенте</h3>
             </div>
-            <table class="data-table">
-                <tbody>
-                    <tr>
-                        <td style="color: var(--text-muted); width: 200px;">ФИО</td>
-                        <td>{{ client.last_name }} {{ client.first_name }} {{ client.middle_name }}</td>
-                    </tr>
-                    <tr>
-                        <td style="color: var(--text-muted);">Телефон</td>
-                        <td><a href="tel:{{ client.phone }}">{{ client.phone }}</a></td>
-                    </tr>
-                    <tr>
-                        <td style="color: var(--text-muted);">Email</td>
-                        <td>{{ client.email|default:"Не указан" }}</td>
-                    </tr>
-                    <tr>
-                        <td style="color: var(--text-muted);">Дата рождения</td>
-                        <td>{{ client.birth_date|default:"Не указана" }}</td>
-                    </tr>
-                    <tr>
-                        <td style="color: var(--text-muted);">Статус</td>
-                        <td>{{ client.get_status_display }}</td>
-                    </tr>
-                    <tr>
-                        <td style="color: var(--text-muted);">Дней без активности</td>
-                        <td>{{ client.silent_days|default:0 }}</td>
-                    </tr>
-                    <tr>
-                        <td style="color: var(--text-muted);">Источник</td>
-                        <td>{{ client.source|default:"Не указан" }}</td>
-                    </tr>
-                    <tr>
-                        <td style="color: var(--text-muted);">Теги</td>
-                        <td>{{ client.tags|default:"Нет тегов" }}</td>
-                    </tr>
-                    {% if client.notes %}
-                    <tr>
-                        <td style="color: var(--text-muted);">Заметки</td>
-                        <td>{{ client.notes }}</td>
-                    </tr>
-                    {% endif %}
-                </tbody>
-            </table>
+            <div class="info-grid">
+                <div class="info-item">
+                    <span class="info-label">Телефон</span>
+                    <span class="info-value"><a href="tel:{{ client.phone }}">{{ client.phone }}</a></span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Email</span>
+                    <span class="info-value">{{ client.email|default:"Не указан" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Дата рождения</span>
+                    <span class="info-value">{{ client.birth_date|date:"d.m.Y"|default:"Не указана" }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Статус</span>
+                    <span class="info-value">{{ client.get_status_display }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Дней без активности</span>
+                    <span class="info-value">{{ client.silent_days|default:0 }}</span>
+                </div>
+                <div class="info-item">
+                    <span class="info-label">Источник</span>
+                    <span class="info-value">{{ client.source|default:"Не указан" }}</span>
+                </div>
+                {% if client.tags %}
+                <div class="info-item">
+                    <span class="info-label">Теги</span>
+                    <span class="info-value">
+                        {% if client.tags %}
+                            {% for tag in client.tags|cut:"," %}
+                                {% if tag %}<span class="tag">{{ tag }}</span>{% endif %}
+                            {% endfor %}
+                        {% else %}Нет тегов{% endif %}
+                    </span>
+                </div>
+                {% endif %}
+                {% if client.notes %}
+                <div class="info-item full-width">
+                    <span class="info-label">Заметки</span>
+                    <span class="info-value">{{ client.notes }}</span>
+                </div>
+                {% endif %}
+            </div>
         </div>
 
+        <!-- Статистика -->
         <div class="glass-card bento-item narrow">
             <div class="section-header">
                 <h3>📊 Статистика</h3>
             </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Всего платежей</div>
-                <div class="kpi-value">{{ payments.count }}</div>
-            </div>
-                <div class="kpi-card">
-                    <div class="kpi-label">Общая сумма</div>
-                    <div class="kpi-value">₽ {{ total_payments_amount }}</div>
+            <div class="kpi-grid-vertical">
+                <div class="kpi-item">
+                    <div class="kpi-icon">💳</div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Всего платежей</div>
+                        <div class="kpi-value">{{ payments|length }}</div>
+                    </div>
                 </div>
-            <div class="kpi-card">
-                <div class="kpi-label">Всего занятий</div>
-                <div class="kpi-value">{{ lessons.count }}</div>
+                <div class="kpi-item">
+                    <div class="kpi-icon">₽</div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Общая сумма</div>
+                        <div class="kpi-value">{{ total_payments_amount|floatformat:0 }} ₽</div>
+                    </div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-icon">🎵</div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Всего занятий</div>
+                        <div class="kpi-value">{{ lessons|length }}</div>
+                    </div>
+                </div>
+                <div class="kpi-item">
+                    <div class="kpi-icon">📚</div>
+                    <div class="kpi-info">
+                        <div class="kpi-label">Активные курсы</div>
+                        <div class="kpi-value">{{ active_enrollments|length }}</div>
+                    </div>
+                </div>
             </div>
         </div>
+
+        <!-- Записи на курсы -->
+        <div class="glass-card bento-item wide">
+            <div class="section-header">
+                <h3>📚 Записи на курсы</h3>
+                <a href="{% url 'core:enrollments_list' %}?client_id={{ client.pk }}">Все →</a>
+            </div>
+            {% if enrollments %}
+            <div class="enrollments-list">
+                {% for enrollment in enrollments %}
+                <div class="enrollment-card">
+                    <div class="enrollment-header">
+                        <div class="enrollment-course">
+                            <a href="{% url 'core:course_detail' enrollment.course.pk %}">
+                                {{ enrollment.course.name }}
+                            </a>
+                        </div>
+                        <div class="enrollment-status">
+                            <span class="status-badge status-{{ enrollment.status|lower }}">
+                                {{ enrollment.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="enrollment-details">
+                        <span>📅 Начал: {{ enrollment.start_date|date:"d.m.Y" }}</span>
+                        <span>👨‍🏫 {{ enrollment.assigned_teacher.user.get_full_name|default:"Без преподавателя" }}</span>
+                        <span>💰 {{ enrollment.enrolled_price }} ₽</span>
+                        {% if enrollment.progress_percentage %}
+                        <div class="enrollment-progress">
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: {{ enrollment.progress_percentage }}%;"></div>
+                            </div>
+                            <span class="progress-text">{{ enrollment.progress_percentage }}%</span>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Нет записей на курсы</p>
+            {% endif %}
+        </div>
+
+        <!-- Контактные лица -->
+        {% if contacts %}
+        <div class="glass-card bento-item narrow">
+            <div class="section-header">
+                <h3>👥 Контакты</h3>
+            </div>
+            <div class="contacts-list">
+                {% for contact in contacts %}
+                <div class="contact-item">
+                    <div class="contact-name">
+                        {{ contact.name }}
+                        {% if contact.is_primary %}<span class="badge-primary">Основной</span>{% endif %}
+                    </div>
+                    <div class="contact-relation">{{ contact.get_relation_display|default:contact.relation }}</div>
+                    <div class="contact-phone"><a href="tel:{{ contact.phone }}">{{ contact.phone }}</a></div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
 
         <!-- Платежи -->
         <div class="glass-card bento-item wide">
             <div class="section-header">
                 <h3>💳 Платежи</h3>
-                <a href="#">Все →</a>
+                <a href="{% url 'core:payments_list' %}?client_id={{ client.pk }}">Все →</a>
             </div>
+            {% if payments %}
             <table class="data-table">
                 <thead>
                     <tr>
@@ -107,35 +201,61 @@
                     {% for payment in payments %}
                     <tr>
                         <td>{{ payment.created_at|date:"d.m.Y H:i" }}</td>
-                        <td>₽ {{ payment.amount }}</td>
+                        <td><strong>{{ payment.amount }} ₽</strong></td>
                         <td>
-                            {% if payment.status == 'COMPLETED' %}
-                                <span class="status-badge status-paid">✓</span>
-                            {% elif payment.status == 'PENDING' %}
-                                <span class="status-badge status-pending">⏳</span>
-                            {% else %}
-                                <span class="status-badge status-overdue">⚠</span>
-                            {% endif %}
+                            <span class="status-badge status-{{ payment.status|lower }}">
+                                {{ payment.get_status_display }}
+                            </span>
                         </td>
-                        <td>{{ payment.method.name|default:"-" }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">
-                            Платежи отсутствуют
-                        </td>
+                        <td>{{ payment.get_payment_method_display }}</td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <p class="text-muted">Платежи отсутствуют</p>
+            {% endif %}
+        </div>
+
+        <!-- Взаимодействия -->
+        <div class="glass-card bento-item wide">
+            <div class="section-header">
+                <h3>📞 Взаимодействия</h3>
+            </div>
+            {% if interactions %}
+            <div class="interactions-timeline">
+                {% for interaction in interactions %}
+                <div class="interaction-item">
+                    <div class="interaction-date">
+                        {{ interaction.date_time|date:"d.m.Y H:i" }}
+                    </div>
+                    <div class="interaction-content">
+                        <div class="interaction-type">
+                            <span class="status-badge status-{{ interaction.status|lower }}">
+                                {{ interaction.get_interaction_type_display }}
+                            </span>
+                        </div>
+                        <div class="interaction-subject">{{ interaction.subject }}</div>
+                        <div class="interaction-note">{{ interaction.note|default:"" }}</div>
+                        <div class="interaction-created-by">
+                            Создал: {{ interaction.created_by.get_full_name|default:interaction.created_by.username }}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p class="text-muted">Взаимодействий нет</p>
+            {% endif %}
         </div>
 
         <!-- Занятия -->
         <div class="glass-card bento-item wide">
             <div class="section-header">
-                <h3>🎵 Занятия</h3>
+                <h3>🎵 Последние занятия</h3>
                 <a href="#">Все →</a>
             </div>
+            {% if lessons %}
             <table class="data-table">
                 <thead>
                     <tr>
@@ -149,19 +269,283 @@
                     {% for lesson in lessons %}
                     <tr>
                         <td>{{ lesson.start_time|date:"d.m.Y H:i" }}</td>
-                        <td>{{ lesson.lesson_type.name }}</td>
+                        <td>{{ lesson.lesson_type.name|default:"-" }}</td>
                         <td>{{ lesson.teacher.user.get_full_name|default:"-" }}</td>
-                        <td>{{ lesson.get_status_display }}</td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="4" style="text-align: center; padding: 20px; color: var(--text-muted);">
-                            Занятия отсутствуют
+                        <td>
+                            <span class="status-badge status-{{ lesson.status|lower }}">
+                                {{ lesson.get_status_display }}
+                            </span>
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
+            {% else %}
+            <p class="text-muted">Занятия отсутствуют</p>
+            {% endif %}
         </div>
     </div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .page-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        margin-bottom: var(--space-lg);
+    }
+    
+    .page-actions {
+        display: flex;
+        gap: var(--space-xs);
+    }
+    
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: var(--space-md);
+    }
+    
+    .info-item {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+    
+    .info-item.full-width {
+        grid-column: span 2;
+    }
+    
+    .info-label {
+        color: var(--text-muted);
+        font-size: 13px;
+    }
+    
+    .info-value {
+        font-weight: 500;
+    }
+    
+    .info-value a {
+        color: var(--primary);
+        text-decoration: none;
+    }
+    
+    .info-value a:hover {
+        text-decoration: underline;
+    }
+    
+    .tag {
+        display: inline-block;
+        padding: 4px 12px;
+        background: rgba(0, 219, 233, 0.1);
+        color: var(--primary);
+        border-radius: var(--radius-full);
+        font-size: 12px;
+        margin-right: 4px;
+    }
+    
+    .kpi-grid-vertical {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+    
+    .kpi-item {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        padding: var(--space-sm);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius-md);
+    }
+    
+    .kpi-icon {
+        font-size: 32px;
+    }
+    
+    .kpi-info {
+        flex: 1;
+    }
+    
+    .enrollments-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-sm);
+    }
+    
+    .enrollment-card {
+        padding: var(--space-md);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius-md);
+        border: 1px solid var(--glass-border);
+    }
+    
+    .enrollment-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-sm);
+    }
+    
+    .enrollment-course a {
+        color: var(--primary);
+        text-decoration: none;
+        font-weight: 600;
+    }
+    
+    .enrollment-details {
+        display: flex;
+        gap: var(--space-md);
+        font-size: 13px;
+        color: var(--text-muted);
+        flex-wrap: wrap;
+    }
+    
+    .enrollment-progress {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        gap: var(--space-sm);
+        margin-top: var(--space-sm);
+    }
+    
+    .progress-bar {
+        flex: 1;
+        height: 6px;
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: var(--radius-full);
+        overflow: hidden;
+    }
+    
+    .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, var(--primary), var(--secondary));
+        transition: width 0.3s ease;
+    }
+    
+    .progress-text {
+        font-size: 12px;
+        color: var(--text-muted);
+        min-width: 40px;
+    }
+    
+    .contacts-list {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+    
+    .contact-item {
+        padding: var(--space-sm);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius-md);
+    }
+    
+    .contact-name {
+        font-weight: 600;
+        margin-bottom: 4px;
+    }
+    
+    .badge-primary {
+        display: inline-block;
+        padding: 2px 8px;
+        background: rgba(0, 219, 233, 0.2);
+        color: var(--primary);
+        border-radius: var(--radius-sm);
+        font-size: 10px;
+        margin-left: 8px;
+    }
+    
+    .contact-relation {
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-bottom: 4px;
+    }
+    
+    .contact-phone a {
+        color: var(--primary);
+        text-decoration: none;
+        font-size: 13px;
+    }
+    
+    .interactions-timeline {
+        display: flex;
+        flex-direction: column;
+        gap: var(--space-md);
+    }
+    
+    .interaction-item {
+        display: flex;
+        gap: var(--space-md);
+        padding: var(--space-md);
+        background: rgba(255, 255, 255, 0.02);
+        border-radius: var(--radius-md);
+        border-left: 3px solid var(--primary);
+    }
+    
+    .interaction-date {
+        font-size: 12px;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+    
+    .interaction-content {
+        flex: 1;
+    }
+    
+    .interaction-subject {
+        font-weight: 600;
+        margin: 8px 0;
+    }
+    
+    .interaction-note {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+    }
+    
+    .interaction-created-by {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+    
+    .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 12px;
+        border-radius: var(--radius-full);
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+    
+    .status-active { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .status-pending { background: rgba(245, 158, 11, 0.15); color: var(--warning); }
+    .status-completed { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+    .status-dropped { background: rgba(239, 68, 68, 0.15); color: var(--error); }
+    .status-paused { background: rgba(156, 163, 175, 0.15); color: #9ca3af; }
+    .status-paid { background: rgba(16, 185, 129, 0.15); color: var(--success); }
+    .status-overdue { background: rgba(239, 68, 68, 0.15); color: var(--error); }
+    
+    .text-muted {
+        color: var(--text-muted);
+        font-style: italic;
+    }
+    
+    @media (max-width: 1024px) {
+        .info-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .info-item.full-width {
+            grid-column: span 1;
+        }
+        
+        .enrollment-details {
+            flex-direction: column;
+            gap: 4px;
+        }
+    }
+</style>
 {% endblock %}
