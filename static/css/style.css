@@ -519,6 +519,15 @@ body.sidebar-collapsed .main-content {
     margin-left: 64px !important;
 }
 
+/* ====== FULL WIDTH BUTTON HELPER ====== */
+.full-width {
+    width: 100% !important;
+}
+
+.full-width span {
+    display: inline !important;
+}
+
 #sidebar-toggle {
     transition: transform 0.3s ease;
     border-radius: var(--radius-md);

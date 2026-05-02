@@ -6,54 +6,62 @@ Invalid filter: 'replace'
 
 {% block content %}
 <div class="client-detail-grid">
-    <!-- ЛЕВАЯ КОЛОНКА: Быстрые действия -->
-    <div class="client-actions-sidebar">
+    <!-- ЛЕВАЯ КОЛОНКА: Профиль клиента -->
+    <div class="client-profile-sidebar">
         <div class="glass-card">
-            <h3>⚡ Быстрые действия</h3>
+            <div class="profile-header">
+                <div class="profile-avatar">
+                    {% if client.photo %}
+                    <img src="{{ client.photo.url }}" alt="{{ client }}">
+                    {% else %}
+                    <div class="avatar-placeholder">
+                        {{ client.last_name|slice:":1" }}{{ client.first_name|slice:":1" }}
+                    </div>
+                    {% endif %}
+                </div>
+                <div class="profile-name">
+                    <h2 contenteditable="true" id="clientName" onclick="editClientName()">
+                        {{ client.last_name }} {{ client.first_name }}
+                    </h2>
+                    <p class="profile-status">
+                        <span class="status-badge status-{{ client.status|lower }}">
+                            {{ client.get_status_display }}
+                        </span>
+                    </p>
+                </div>
+            </div>
             
-            <div class="quick-actions-list">
-                <a href="tel:{{ client.phone }}" class="quick-action-btn primary">
-                    <span class="material-symbols-outlined">call</span>
-                    <span>Позвонить</span>
-                </a>
-                
-                <a href="https://wa.me/{{ client.phone }}" target="_blank" class="quick-action-btn">
-                    <span class="material-symbols-outlined">message</span>
-                    <span>WhatsApp</span>
-                </a>
-                
-                <a href="https://t.me/{{ client.phone }}" target="_blank" class="quick-action-btn">
-                    <span class="material-symbols-outlined">chat</span>
-                    <span>Telegram</span>
-                </a>
-                
-                <a href="#" class="quick-action-btn" onclick="showModal('paymentModal')">
-                    <span class="material-symbols-outlined">payments</span>
-                    <span>Принять платёж</span>
-                </a>
-                
-                <a href="#" class="quick-action-btn" onclick="showModal('saleModal')">
-                    <span class="material-symbols-outlined">shopping_cart</span>
-                    <span>Быстрая продажа</span>
-                </a>
-                
-                <a href="{% url 'core:client_create' %}" class="quick-action-btn">
-                    <span class="material-symbols-outlined">person_add</span>
-                    <span>Новый клиент</span>
-                </a>
-                
-                <a href="#" class="quick-action-btn" onclick="showModal('taskModal')">
-                    <span class="material-symbols-outlined">task_alt</span>
-                    <span>Создать задачу</span>
-                </a>
-                
-                <a href="#" class="quick-action-btn" onclick="showModal('noteModal')">
-                    <span class="material-symbols-outlined">note_add</span>
-                    <span>Добавить заметку</span>
+            <div class="profile-info">
+                <div class="info-row">
+                    <span class="material-symbols-outlined">phone</span>
+                    <a href="tel:{{ client.phone }}">{{ client.phone }}</a>
+                </div>
+                {% if client.email %}
+                <div class="info-row">
+                    <span class="material-symbols-outlined">email</span>
+                    <a href="mailto:{{ client.email }}">{{ client.email }}</a>
+                </div>
+                {% endif %}
+                {% if client.birth_date %}
+                <div class="info-row">
+                    <span class="material-symbols-outlined">cake</span>
+                    <span>{{ client.birth_date|date:"d.m.Y" }}</span>
+                </div>
+                {% endif %}
+                <div class="info-row">
+                    <span class="material-symbols-outlined">date_range</span>
+                    <span>С {{ client.created_at|date:"d.m.Y" }}</span>
+                </div>
+            </div>
+            
+            <div class="profile-actions">
+                <a href="{% url 'core:client_update' client.pk %}" class="btn-primary full-width">
+                    <span class="material-symbols-outlined">edit</span>
+                    <span>Редактировать профиль</span>
                 </a>
             </div>
         </div>
-
+        
         <!-- Статистика остатков -->
         <div class="glass-card" style="margin-top: var(--space-md);">
             <h3>📊 Остатки</h3>
@@ -67,11 +75,45 @@ Invalid filter: 'replace'
                     <span class="balance-value">{{ total_remaining_practice }} ч.</span>
                 </div>
             </div>
-            <a href="#" class="btn-secondary" style="width: 100%; margin-top: var(--space-sm);" onclick="showModal('historyModal')">
+            <a href="#" class="btn-secondary full-width" onclick="showModal('historyModal')">
                 <span class="material-symbols-outlined">history</span>
-                История занятий
+                <span>История занятий</span>
             </a>
         </div>
+        
+        <!-- Контактные лица -->
+        {% if contacts %}
+        <div class="glass-card" style="margin-top: var(--space-md);">
+            <h3>👥 Контакты</h3>
+            <div class="contacts-mini">
+                {% for contact in contacts %}
+                <div class="contact-mini">
+                    <div class="contact-mini-name">
+                        {{ contact.name }}
+                        {% if contact.is_primary %}<span class="badge-primary">✓</span>{% endif %}
+                    </div>
+                    <div class="contact-mini-phone">
+                        <a href="tel:{{ contact.phone }}">{{ contact.phone }}</a>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Теги -->
+        {% if client.tags %}
+        <div class="glass-card" style="margin-top: var(--space-md);">
+            <h3>🏷️ Теги</h3>
+            <div class="tags-container">
+                {% for tag in client.tags|cut:"," %}
+                {% if tag %}
+                <span class="tag">{{ tag }}</span>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
     </div>
 
     <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА: Лог взаимодействий -->
@@ -175,95 +217,53 @@ Invalid filter: 'replace'
         </div>
     </div>
 
-    <!-- ПРАВАЯ КОЛОНКА: Профиль клиента -->
-    <div class="client-profile-sidebar">
+    <!-- ПРАВАЯ КОЛОНКА: Быстрые действия -->
+    <div class="client-actions-sidebar">
         <div class="glass-card">
-            <div class="profile-header">
-                <div class="profile-avatar">
-                    {% if client.photo %}
-                    <img src="{{ client.photo.url }}" alt="{{ client }}">
-                    {% else %}
-                    <div class="avatar-placeholder">
-                        {{ client.last_name|slice:":1" }}{{ client.first_name|slice:":1" }}
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="profile-name">
-                    <h2 contenteditable="true" id="clientName" onclick="editClientName()">
-                        {{ client.last_name }} {{ client.first_name }}
-                    </h2>
-                    <p class="profile-status">
-                        <span class="status-badge status-{{ client.status|lower }}">
-                            {{ client.get_status_display }}
-                        </span>
-                    </p>
-                </div>
-            </div>
+            <h3>⚡ Быстрые действия</h3>
             
-            <div class="profile-info">
-                <div class="info-row">
-                    <span class="material-symbols-outlined">phone</span>
-                    <a href="tel:{{ client.phone }}">{{ client.phone }}</a>
-                </div>
-                {% if client.email %}
-                <div class="info-row">
-                    <span class="material-symbols-outlined">email</span>
-                    <a href="mailto:{{ client.email }}">{{ client.email }}</a>
-                </div>
-                {% endif %}
-                {% if client.birth_date %}
-                <div class="info-row">
-                    <span class="material-symbols-outlined">cake</span>
-                    <span>{{ client.birth_date|date:"d.m.Y" }}</span>
-                </div>
-                {% endif %}
-                <div class="info-row">
-                    <span class="material-symbols-outlined">date_range</span>
-                    <span>С {{ client.created_at|date:"d.m.Y" }}</span>
-                </div>
-            </div>
-            
-            <div class="profile-actions">
-                <a href="{% url 'core:client_update' client.pk %}" class="btn-primary" style="width: 100%;">
-                    <span class="material-symbols-outlined">edit</span>
-                    Редактировать профиль
+            <div class="quick-actions-list">
+                <a href="tel:{{ client.phone }}" class="quick-action-btn primary">
+                    <span class="material-symbols-outlined">call</span>
+                    <span>Позвонить</span>
+                </a>
+                
+                <a href="https://wa.me/{{ client.phone }}" target="_blank" class="quick-action-btn">
+                    <span class="material-symbols-outlined">message</span>
+                    <span>WhatsApp</span>
+                </a>
+                
+                <a href="https://t.me/{{ client.phone }}" target="_blank" class="quick-action-btn">
+                    <span class="material-symbols-outlined">chat</span>
+                    <span>Telegram</span>
+                </a>
+                
+                <a href="#" class="quick-action-btn" onclick="showModal('paymentModal')">
+                    <span class="material-symbols-outlined">payments</span>
+                    <span>Принять платёж</span>
+                </a>
+                
+                <a href="#" class="quick-action-btn" onclick="showModal('saleModal')">
+                    <span class="material-symbols-outlined">shopping_cart</span>
+                    <span>Быстрая продажа</span>
+                </a>
+                
+                <a href="{% url 'core:client_create' %}" class="quick-action-btn">
+                    <span class="material-symbols-outlined">person_add</span>
+                    <span>Новый клиент</span>
+                </a>
+                
+                <a href="#" class="quick-action-btn" onclick="showModal('taskModal')">
+                    <span class="material-symbols-outlined">task_alt</span>
+                    <span>Создать задачу</span>
+                </a>
+                
+                <a href="#" class="quick-action-btn" onclick="showModal('noteModal')">
+                    <span class="material-symbols-outlined">note_add</span>
+                    <span>Добавить заметку</span>
                 </a>
             </div>
         </div>
-        
-        <!-- Контактные лица -->
-        {% if contacts %}
-        <div class="glass-card" style="margin-top: var(--space-md);">
-            <h3>👥 Контакты</h3>
-            <div class="contacts-mini">
-                {% for contact in contacts %}
-                <div class="contact-mini">
-                    <div class="contact-mini-name">
-                        {{ contact.name }}
-                        {% if contact.is_primary %}<span class="badge-primary">✓</span>{% endif %}
-                    </div>
-                    <div class="contact-mini-phone">
-                        <a href="tel:{{ contact.phone }}">{{ contact.phone }}</a>
-                    </div>
-                </div>
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        
-        <!-- Теги -->
-        {% if client.tags %}
-        <div class="glass-card" style="margin-top: var(--space-md);">
-            <h3>🏷️ Теги</h3>
-            <div class="tags-container">
-                {% for tag in client.tags|cut:"," %}
-                {% if tag %}
-                <span class="tag">{{ tag }}</span>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
     </div>
 </div>
 
@@ -309,29 +309,34 @@ Invalid filter: 'replace'
     display: flex;
     align-items: center;
     gap: 12px;
-    padding: 12px;
+    padding: 12px 16px;
     background: var(--bg-surface);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-md);
     color: var(--text-primary);
     text-decoration: none;
     transition: all 0.2s;
+    font-size: 14px;
+    font-weight: 500;
 }
 
 .quick-action-btn:hover {
     background: var(--bg-surface-high);
     border-color: var(--primary);
     color: var(--primary);
+    transform: translateY(-2px);
 }
 
 .quick-action-btn.primary {
     background: linear-gradient(135deg, var(--primary), #00b8c4);
     color: #000;
     font-weight: 600;
+    border: none;
 }
 
 .quick-action-btn.primary:hover {
-    box-shadow: 0 0 15px rgba(0, 219, 233, 0.4);
+    box-shadow: 0 4px 15px rgba(0, 219, 233, 0.4);
+    transform: translateY(-2px);
 }
 
 .balance-info {
