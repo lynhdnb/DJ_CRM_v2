@@ -190,15 +190,34 @@ def client_detail(request, client_id):
     # Контактные лица
     contacts = client.additional_contacts.all()
     
+    # Взаимодействия
+    interactions = client.interactions.all().order_by('-date_time')[:20]
+    
+    # Занятия (с посещаемостью)
+    lessons = client.lessons.all().order_by('-start_time')[:20]
+    
+    # Задачи для клиента
+    tasks = Task.objects.filter(client=client, status__in=['TODO', 'IN_PROGRESS']).order_by('due_date')[:5]
+    
+    # Вычисляем остаток занятий и практики
+    total_remaining_lessons = sum(e.remaining_lessons for e in active_enrollments)
+    total_remaining_practice = sum(
+        e.remaining_practice_hours for e in active_enrollments 
+        if not e.is_unlimited_practice
+    )
+    
     context = {
         'client': client,
-        'interactions': client.interactions.all().order_by('-date_time')[:10],
+        'interactions': interactions,
         'payments': payments[:5],
-        'lessons': client.lessons.all().order_by('-start_time')[:5],
+        'lessons': lessons,
         'enrollments': enrollments[:10],
         'active_enrollments': active_enrollments,
         'contacts': contacts,
+        'tasks': tasks,
         'total_payments_amount': total_payments_amount,
+        'total_remaining_lessons': total_remaining_lessons,
+        'total_remaining_practice': total_remaining_practice,
     }
     
     return render(request, 'clients/client_detail.html', context)
