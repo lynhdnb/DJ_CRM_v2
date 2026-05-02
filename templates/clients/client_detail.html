@@ -116,44 +116,94 @@ Invalid filter: 'replace'
         {% endif %}
     </div>
 
-    <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА: Лог взаимодействий -->
+    <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА: Лог взаимодействий (чат) -->
     <div class="client-timeline">
-        <div class="glass-card">
-            <div class="section-header">
+        <div class="glass-card chat-container">
+            <div class="chat-header">
                 <h3>📜 История взаимодействий</h3>
-                <button class="btn-secondary" onclick="showModal('addInteractionModal')">
-                    <span class="material-symbols-outlined">add</span>
-                    Добавить
-                </button>
+                <div class="chat-filters">
+                    <a href="?filter=all&{{ request.GET.urlencode }}" class="filter-btn {% if log_filter == 'all' %}active{% endif %}">Все</a>
+                    <a href="?filter=comment&{{ request.GET.urlencode }}" class="filter-btn {% if log_filter == 'comment' %}active{% endif %}">Комментарии</a>
+                    <a href="?filter=task&{{ request.GET.urlencode }}" class="filter-btn {% if log_filter == 'task' %}active{% endif %}">Задачи</a>
+                    <a href="?filter=lesson&{{ request.GET.urlencode }}" class="filter-btn {% if log_filter == 'lesson' %}active{% endif %}">Занятия</a>
+                </div>
             </div>
             
-            <div class="timeline-container">
-                {% for interaction in interactions %}
-                <div class="timeline-item">
-                    <div class="timeline-marker"></div>
-                    <div class="timeline-content">
-                        <div class="timeline-header">
-                            <span class="timeline-type status-{{ interaction.status|lower }}">
-                                {{ interaction.get_interaction_type_display }}
-                            </span>
-                            <span class="timeline-time">{{ interaction.date_time|date:"d.m.Y H:i" }}</span>
-                        </div>
-                        <div class="timeline-subject">{{ interaction.subject }}</div>
-                        {% if interaction.note %}
-                        <div class="timeline-note">{{ interaction.note }}</div>
+            <div class="chat-messages" id="chatMessages">
+                {% for entry in log_entries %}
+                <div class="chat-message message-{{ entry.subtype }}">
+                    <div class="message-avatar">
+                        {% if entry.type == 'lesson' %}
+                            🎵
+                        {% elif entry.type == 'task' %}
+                            📋
+                        {% elif entry.subtype == 'call' %}
+                            📞
+                        {% elif entry.subtype == 'meeting' %}
+                            👥
+                        {% else %}
+                            💬
                         {% endif %}
-                        <div class="timeline-meta">
-                            Создал: {{ interaction.created_by.get_full_name|default:interaction.created_by.username }}
+                    </div>
+                    <div class="message-content">
+                        <div class="message-header">
+                            <span class="message-author">{{ entry.created_by.get_full_name|default:entry.created_by|default:"Аноним" }}</span>
+                            <span class="message-time">{{ entry.date_time|date:"d.m.Y H:i" }}</span>
                         </div>
+                        {% if entry.subject %}
+                        <div class="message-subject">{{ entry.subject }}</div>
+                        {% endif %}
+                        {% if entry.note %}
+                        <div class="message-note">{{ entry.note }}</div>
+                        {% endif %}
+                        {% if entry.type == 'task' %}
+                        <div class="message-meta">
+                            <span class="status-badge status-{{ entry.status }}">{{ entry.get_status_display|default:entry.status }}</span>
+                            <span class="priority-badge priority-{{ entry.priority }}">{{ entry.get_priority_display|default:entry.priority }}</span>
+                        </div>
+                        {% elif entry.type == 'lesson' %}
+                        <div class="message-meta">
+                            <span class="status-badge status-{{ entry.status }}">{{ entry.get_status_display|default:entry.status }}</span>
+                        </div>
+                        {% endif %}
                     </div>
                 </div>
                 {% empty %}
-                <div class="timeline-empty">
-                    Взаимодействий пока нет
+                <div class="chat-empty">
+                    <div class="empty-icon">💬</div>
+                    <p>Взаимодействий пока нет</p>
                 </div>
                 {% endfor %}
             </div>
+            
+            <!-- Поле ввода сообщения -->
+            <div class="chat-input-area">
+                <form action="{% url 'core:create_interaction' client.pk %}" method="POST" class="chat-input-form">
+                    {% csrf_token %}
+                    <div class="chat-input-wrapper">
+                        <div class="chat-input-left">
+                            <select name="type" class="interaction-type-select" required>
+                                <option value="comment">💬 Комментарий</option>
+                                <option value="call">📞 Звонок</option>
+                                <option value="meeting">👥 Встреча</option>
+                                <option value="task">📋 Задача</option>
+                                <option value="email">📧 Email</option>
+                            </select>
+                        </div>
+                        <div class="chat-input-center">
+                            <input type="text" name="content" class="chat-input-text" placeholder="Введите сообщение..." required autocomplete="off">
+                        </div>
+                        <div class="chat-input-right">
+                            <button type="submit" class="send-button">
+                                <span class="material-symbols-outlined">send</span>
+                            </button>
+                        </div>
+                    </div>
+                    <input type="hidden" name="subject" value="">
+                </form>
+            </div>
         </div>
+    </div>
         
         <!-- Задачи -->
         <div class="glass-card" style="margin-top: var(--space-md);">
@@ -288,10 +338,243 @@ Invalid filter: 'replace'
 /* ====== СЕТКА КАРТОЧКИ КЛИЕНТА ====== */
 .client-detail-grid {
     display: grid;
-    grid-template-columns: 280px 1fr 300px;
+    grid-template-columns: 280px 1fr 280px;
     gap: var(--space-md);
     min-height: calc(100vh - 120px);
 }
+
+/* ====== ЧАТ-ИНТЕРФЕЙС ====== */
+.chat-container {
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 200px);
+}
+
+.chat-header {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--glass-border);
+}
+
+.chat-header h3 {
+    margin-bottom: var(--space-sm);
+}
+
+.chat-filters {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.filter-btn {
+    padding: 6px 12px;
+    background: var(--bg-surface);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-full);
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 12px;
+    transition: all 0.2s;
+}
+
+.filter-btn:hover,
+.filter-btn.active {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+}
+
+.chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.chat-message {
+    display: flex;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    background: rgba(255, 255, 255, 0.02);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--glass-border);
+    animation: messageSlideIn 0.3s ease;
+}
+
+@keyframes messageSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.message-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    flex-shrink: 0;
+}
+
+.message-content {
+    flex: 1;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.message-author {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.message-time {
+    font-size: 11px;
+    color: var(--text-muted);
+}
+
+.message-subject {
+    font-weight: 600;
+    margin-bottom: 4px;
+}
+
+.message-note {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-bottom: 8px;
+    white-space: pre-wrap;
+}
+
+.message-meta {
+    display: flex;
+    gap: var(--space-xs);
+    margin-top: 8px;
+}
+
+.chat-empty {
+    text-align: center;
+    padding: var(--space-lg);
+    color: var(--text-muted);
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: var(--space-md);
+    opacity: 0.5;
+}
+
+/* Поле ввода */
+.chat-input-area {
+    padding: var(--space-md);
+    border-top: 1px solid var(--glass-border);
+    background: var(--bg-surface);
+}
+
+.chat-input-form {
+    display: flex;
+    flex-direction: column;
+}
+
+.chat-input-wrapper {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.chat-input-left {
+    flex-shrink: 0;
+}
+
+.interaction-type-select {
+    padding: 10px 12px;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 14px;
+    cursor: pointer;
+}
+
+.interaction-type-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.chat-input-center {
+    flex: 1;
+}
+
+.chat-input-text {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg-primary);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-md);
+    color: var(--text-primary);
+    font-size: 14px;
+}
+
+.chat-input-text:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.send-button {
+    flex-shrink: 0;
+    width: 44px;
+    height: 44px;
+    background: linear-gradient(135deg, var(--primary), #00b8c4);
+    border: none;
+    border-radius: var(--radius-md);
+    color: #000;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.send-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 0 15px rgba(0, 219, 233, 0.4);
+}
+
+.send-button .material-symbols-outlined {
+    font-size: 24px;
+}
+
+/* Цвета типов сообщений */
+.message-call { border-left: 4px solid var(--success); }
+.message-meeting { border-left: 4px solid var(--warning); }
+.message-comment { border-left: 4px solid var(--primary); }
+.message-task { border-left: 4px solid #ecb2ff; }
+.message-email { border-left: 4px solid #3b82f6; }
+.message-lesson { border-left: 4px solid #10b981; }
+
+/* Стили для задач */
+.priority-badge {
+    padding: 2px 8px;
+    border-radius: var(--radius-sm);
+    font-size: 10px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.priority-high { background: rgba(239, 68, 68, 0.2); color: var(--error); }
+.priority-medium { background: rgba(245, 158, 11, 0.2); color: var(--warning); }
+.priority-low { background: rgba(16, 185, 129, 0.2); color: var(--success); }
 
 /* ====== ЛЕВАЯ КОЛОНКА ====== */
 .client-actions-sidebar {
@@ -681,7 +964,7 @@ Invalid filter: 'replace'
         grid-template-columns: 260px 1fr 280px;
     }
 }
-
+    
 @media (max-width: 1200px) {
     .client-detail-grid {
         grid-template-columns: 1fr;
@@ -699,6 +982,14 @@ Invalid filter: 'replace'
 </style>
 
 <script>
+// Автопрокрутка чата к последнему сообщению
+document.addEventListener('DOMContentLoaded', function() {
+    const chatMessages = document.getElementById('chatMessages');
+    if (chatMessages) {
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+});
+
 function showModal(modalId) {
     document.getElementById(modalId).style.display = 'flex';
 }

@@ -190,14 +190,69 @@ def client_detail(request, client_id):
     # Контактные лица
     contacts = client.additional_contacts.all()
     
-    # Взаимодействия
-    interactions = client.interactions.all().order_by('-date_time')[:20]
+    # Фильтр для лога
+    log_filter = request.GET.get('filter', 'all')  # all, comment, task, lesson
     
-    # Занятия (с посещаемостью)
-    lessons = client.lessons.all().order_by('-start_time')[:20]
+    # Взаимодействия
+    interactions = client.interactions.all().order_by('-date_time')
     
     # Задачи для клиента
-    tasks = Task.objects.filter(client=client, status__in=['TODO', 'IN_PROGRESS']).order_by('due_date')[:5]
+    tasks = Task.objects.filter(client=client).order_by('-created_at')
+    
+    # Занятия
+    lessons = client.lessons.all().order_by('-start_time')
+    
+    # Объединяем в один поток для чата
+    log_entries = []
+    
+    for interaction in interactions:
+        log_entries.append({
+            'type': 'interaction',
+            'subtype': interaction.interaction_type,
+            'date_time': interaction.date_time,
+            'subject': interaction.subject,
+            'note': interaction.note,
+            'created_by': interaction.created_by,
+            'id': interaction.id,
+        })
+    
+    for task in tasks:
+        log_entries.append({
+            'type': 'task',
+            'subtype': 'task',
+            'date_time': task.created_at,
+            'subject': task.title,
+            'note': task.description or '',
+            'created_by': task.created_by,
+            'status': task.status,
+            'priority': task.priority,
+            'id': task.id,
+        })
+    
+    for lesson in lessons:
+        log_entries.append({
+            'type': 'lesson',
+            'subtype': lesson.lesson_type.name if lesson.lesson_type else 'Занятие',
+            'date_time': lesson.start_time,
+            'subject': f"{lesson.lesson_type.name if lesson.lesson_type else 'Занятие'} с клиентом",
+            'note': f"Преподаватель: {lesson.teacher.user.get_full_name() if lesson.teacher else '-'}",
+            'status': lesson.status,
+            'id': lesson.id,
+        })
+    
+    # Сортируем по дате (свежие сверху)
+    log_entries.sort(key=lambda x: x['date_time'], reverse=True)
+    
+    # Применяем фильтр
+    if log_filter == 'comment':
+        log_entries = [e for e in log_entries if e['type'] == 'interaction' and e['subtype'] == 'comment']
+    elif log_filter == 'task':
+        log_entries = [e for e in log_entries if e['type'] == 'task']
+    elif log_filter == 'lesson':
+        log_entries = [e for e in log_entries if e['type'] == 'lesson']
+    
+    # Ограничиваем количество
+    log_entries = log_entries[:50]
     
     # Вычисляем остаток занятий и практики
     total_remaining_lessons = sum(e.remaining_lessons for e in active_enrollments)
@@ -210,17 +265,57 @@ def client_detail(request, client_id):
         'client': client,
         'interactions': interactions,
         'payments': payments[:5],
-        'lessons': lessons,
+        'lessons': lessons[:10],
         'enrollments': enrollments[:10],
         'active_enrollments': active_enrollments,
         'contacts': contacts,
-        'tasks': tasks,
+        'tasks': tasks[:5],
         'total_payments_amount': total_payments_amount,
         'total_remaining_lessons': total_remaining_lessons,
         'total_remaining_practice': total_remaining_practice,
+        'log_entries': log_entries,
+        'log_filter': log_filter,
     }
     
     return render(request, 'clients/client_detail.html', context)
+
+
+@login_required
+def create_interaction(request, client_id):
+    """Создание взаимодействия через AJAX"""
+    if request.method != 'POST':
+        return redirect('core:client_detail', client_id=client_id)
+    
+    client = get_object_or_404(Client, pk=client_id)
+    
+    interaction_type = request.POST.get('type', 'comment')
+    content = request.POST.get('content', '')
+    subject = request.POST.get('subject', '')
+    
+    if not content and not subject:
+        return redirect('core:client_detail', client_id=client_id)
+    
+    # Создаем взаимодействие
+    interaction = Interaction.objects.create(
+        client=client,
+        interaction_type=interaction_type,
+        subject=subject or content[:50],
+        note=content,
+        date_time=timezone.now(),
+        created_by=request.user,
+    )
+    
+    # Если это задача, создаем Task
+    if interaction_type == 'task':
+        Task.objects.create(
+            title=subject or content[:100],
+            client=client,
+            assigned_to=request.user,
+            due_date=timezone.now().date(),
+            priority='MEDIUM',
+        )
+    
+    return redirect('core:client_detail', client_id=client_id)
 
 
 @login_required
