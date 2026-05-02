@@ -488,43 +488,45 @@ h1, h2, h3, h4, .font-headline {
 ::-webkit-scrollbar-thumb:hover { background: var(--primary); }
 
 /* ====== COLLAPSIBLE SIDEBAR ====== */
-.sidebar.collapsed {
-    width: 64px;
-    padding: var(--space-md) 8px;
+body.sidebar-collapsed .sidebar {
+    width: 64px !important;
+    padding: var(--space-md) 8px !important;
 }
 
-.sidebar.collapsed .sidebar-item {
-    justify-content: center;
-    padding: 12px 8px;
+body.sidebar-collapsed .sidebar .sidebar-item {
+    justify-content: center !important;
+    padding: 12px 8px !important;
 }
 
-.sidebar.collapsed .sidebar-item span:not(.material-symbols-outlined) {
-    display: none;
+body.sidebar-collapsed .sidebar .sidebar-item .sidebar-text {
+    display: none !important;
 }
 
-.sidebar.collapsed .sidebar-item .material-symbols-outlined {
-    margin: 0;
+body.sidebar-collapsed .sidebar .sidebar-item .material-symbols-outlined {
+    font-size: 24px !important;
 }
 
-.sidebar.collapsed .sidebar-cta {
-    text-align: center;
+body.sidebar-collapsed .sidebar .sidebar-cta .btn-primary {
+    justify-content: center !important;
+    padding: 12px !important;
 }
 
-.sidebar.collapsed .sidebar-cta .btn-primary {
-    justify-content: center;
-    padding: 12px;
+body.sidebar-collapsed .sidebar .sidebar-cta .btn-primary .btn-text {
+    display: none !important;
 }
 
-.sidebar.collapsed .sidebar-cta .btn-primary span:not(.material-symbols-outlined) {
-    display: none;
-}
-
-.main-content.sidebar-collapsed {
-    margin-left: 64px;
+body.sidebar-collapsed .main-content {
+    margin-left: 64px !important;
 }
 
 #sidebar-toggle {
     transition: transform 0.3s ease;
+    border-radius: var(--radius-md);
+    padding: 4px !important;
+}
+
+#sidebar-toggle:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
 }
 
 #sidebar-toggle.rotate {
@@ -534,5 +536,5 @@ h1, h2, h3, h4, .font-headline {
 /* Анимация плавного перехода */
 .sidebar,
 .main-content {
-    transition: margin-left 0.3s ease, width 0.3s ease;
+    transition: margin-left 0.3s ease, width 0.3s ease, padding 0.3s ease !important;
 }
