@@ -24,17 +24,20 @@
             {% block topbar_nav %}
             {% endblock %}
         </nav>
-        <div class="topbar-actions">
-            <button title="Уведомления">
-                <span class="material-symbols-outlined">notifications</span>
-            </button>
-            <button title="Поиск">
-                <span class="material-symbols-outlined">search</span>
-            </button>
-            <div class="user-avatar" title="{{ user.get_full_name|default:user.username }}">
-                {{ user.get_full_name|default:user.username|slice:":2"|upper }}
-            </div>
+    <div class="topbar-actions">
+        <button id="sidebar-toggle" title="Свернуть меню">
+            <span class="material-symbols-outlined">menu</span>
+        </button>
+        <button title="Уведомления">
+            <span class="material-symbols-outlined">notifications</span>
+        </button>
+        <button title="Поиск">
+            <span class="material-symbols-outlined">search</span>
+        </button>
+        <div class="user-avatar" title="{{ user.get_full_name|default:user.username }}">
+            {{ user.get_full_name|default:user.username|slice:":2"|upper }}
         </div>
+    </div>
     </header>
 
     <!-- SIDEBAR -->
@@ -101,5 +104,40 @@
     </main>
 
     {% block extra_js %}{% endblock %}
+    
+    <!-- Скрипт для сворачивания сайдбара -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const sidebarToggle = document.getElementById('sidebar-toggle');
+            const sidebar = document.querySelector('.sidebar');
+            const mainContent = document.querySelector('.main-content');
+            
+            // Проверяем сохранённое состояние
+            const sidebarCollapsed = localStorage.getItem('sidebarCollapsed') === 'true';
+            if (sidebarCollapsed) {
+                sidebar.classList.add('collapsed');
+                mainContent.classList.add('sidebar-collapsed');
+                sidebarToggle.classList.add('rotate');
+                sidebarToggle.innerHTML = '<span class="material-symbols-outlined">menu_open</span>';
+            }
+            
+            sidebarToggle.addEventListener('click', function() {
+                sidebar.classList.toggle('collapsed');
+                mainContent.classList.toggle('sidebar-collapsed');
+                this.classList.toggle('rotate');
+                
+                // Сохраняем состояние
+                const isCollapsed = sidebar.classList.contains('collapsed');
+                localStorage.setItem('sidebarCollapsed', isCollapsed);
+                
+                // Меняем иконку
+                if (isCollapsed) {
+                    this.innerHTML = '<span class="material-symbols-outlined">menu_open</span>';
+                } else {
+                    this.innerHTML = '<span class="material-symbols-outlined">menu</span>';
+                }
+            });
+        });
+    </script>
 </body>
 </html>
