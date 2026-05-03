@@ -619,27 +619,28 @@ Invalid filter: 'replace'
 .balance-info {
     display: flex;
     flex-direction: column;
-    gap: var(--space-md);
-    margin: var(--space-md) 0;
+    gap: 8px;
+    margin: var(--space-sm) 0;
 }
 
 .balance-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: var(--space-sm);
+    padding: 8px;
     background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
 }
 
 .balance-label {
     color: var(--text-muted);
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .balance-value {
     font-weight: 700;
-    font-size: 18px;
+    font-size: 16px;
     color: var(--primary);
 }
 
@@ -807,15 +808,15 @@ Invalid filter: 'replace'
 
 .profile-header {
     text-align: center;
-    padding-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
     border-bottom: 1px solid var(--glass-border);
-    margin-bottom: var(--space-md);
+    margin-bottom: var(--space-sm);
 }
 
 .profile-avatar {
-    width: 100px;
-    height: 100px;
-    margin: 0 auto var(--space-md);
+    width: 70px;
+    height: 70px;
+    margin: 0 auto var(--space-sm);
     border-radius: var(--radius-full);
     overflow: hidden;
     background: linear-gradient(135deg, var(--primary), var(--secondary));
@@ -831,14 +832,14 @@ Invalid filter: 'replace'
 }
 
 .avatar-placeholder {
-    font-size: 36px;
+    font-size: 28px;
     font-weight: 700;
     color: #000;
 }
 
 .profile-name h2 {
-    font-size: 20px;
-    margin-bottom: 4px;
+    font-size: 16px;
+    margin-bottom: 2px;
     cursor: pointer;
     display: inline-block;
     border-bottom: 1px dashed transparent;
@@ -849,30 +850,33 @@ Invalid filter: 'replace'
 }
 
 .profile-status {
-    margin-top: 8px;
+    margin-top: 4px;
 }
 
 .profile-info {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 8px;
 }
 
 .info-row {
     display: flex;
     align-items: center;
-    gap: var(--space-sm);
-    padding: var(--space-sm) 0;
+    gap: 8px;
+    padding: 4px 0;
+    font-size: 13px;
 }
 
 .info-row .material-symbols-outlined {
     color: var(--primary);
-    font-size: 20px;
+    font-size: 18px;
+    flex-shrink: 0;
 }
 
 .info-row a {
     color: var(--text-primary);
     text-decoration: none;
+    font-size: 13px;
 }
 
 .info-row a:hover {
@@ -880,31 +884,33 @@ Invalid filter: 'replace'
 }
 
 .profile-actions {
-    margin-top: var(--space-md);
+    margin-top: var(--space-sm);
 }
 
 /* Контакты */
 .contacts-mini {
     display: flex;
     flex-direction: column;
-    gap: var(--space-sm);
+    gap: 8px;
 }
 
 .contact-mini {
-    padding: var(--space-sm);
+    padding: 8px;
     background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-sm);
+    font-size: 12px;
 }
 
 .contact-mini-name {
     font-weight: 600;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
+    font-size: 13px;
 }
 
 .contact-mini-phone a {
     color: var(--primary);
     text-decoration: none;
-    font-size: 13px;
+    font-size: 12px;
 }
 
 .badge-primary {
@@ -913,15 +919,23 @@ Invalid filter: 'replace'
     background: rgba(0, 219, 233, 0.2);
     color: var(--primary);
     border-radius: var(--radius-sm);
-    font-size: 10px;
-    margin-left: 6px;
+    font-size: 9px;
+    margin-left: 4px;
 }
 
 /* Теги */
 .tags-container {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-xs);
+    gap: 4px;
+}
+
+.tag {
+    padding: 3px 8px;
+    background: rgba(0, 219, 233, 0.1);
+    color: var(--primary);
+    border-radius: var(--radius-sm);
+    font-size: 11px;
 }
 
 /* Модальные окна */
