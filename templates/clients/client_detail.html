@@ -139,8 +139,6 @@ Invalid filter: 'replace'
                             📋
                         {% elif entry.subtype == 'call' %}
                             📞
-                        {% elif entry.subtype == 'meeting' %}
-                            👥
                         {% else %}
                             💬
                         {% endif %}
@@ -185,9 +183,7 @@ Invalid filter: 'replace'
                             <select name="type" class="interaction-type-select" required>
                                 <option value="comment">💬 Комментарий</option>
                                 <option value="call">📞 Звонок</option>
-                                <option value="meeting">👥 Встреча</option>
                                 <option value="task">📋 Задача</option>
-                                <option value="email">📧 Email</option>
                             </select>
                         </div>
                         <div class="chat-input-center">
@@ -557,10 +553,8 @@ Invalid filter: 'replace'
 
 /* Цвета типов сообщений */
 .message-call { border-left: 4px solid var(--success); }
-.message-meeting { border-left: 4px solid var(--warning); }
 .message-comment { border-left: 4px solid var(--primary); }
 .message-task { border-left: 4px solid #ecb2ff; }
-.message-email { border-left: 4px solid #3b82f6; }
 .message-lesson { border-left: 4px solid #10b981; }
 
 /* Стили для задач */
