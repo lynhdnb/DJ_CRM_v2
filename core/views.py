@@ -463,6 +463,13 @@ def payments_list(request):
     total_amount = payments.filter(status='COMPLETED').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     pending_amount = payments.filter(status='PENDING').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
     
+    # Средний чек
+    completed_payments = payments.filter(status='COMPLETED')
+    if completed_payments.exists():
+        average_amount = completed_payments.aggregate(avg=Sum('amount'))['avg'] / completed_payments.count()
+    else:
+        average_amount = Decimal('0.00')
+    
     context = {
         'payments': payments,
         'statuses': Payment.STATUS_CHOICES,
@@ -476,6 +483,7 @@ def payments_list(request):
         'date_to': date_to,
         'total_amount': total_amount,
         'pending_amount': pending_amount,
+        'average_amount': average_amount,
         'clients': Client.objects.filter(is_active=True).order_by('last_name'),
         'methods': PaymentMethod.objects.filter(is_active=True).order_by('name'),
     }
