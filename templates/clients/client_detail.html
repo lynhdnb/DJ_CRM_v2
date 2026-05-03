@@ -515,10 +515,10 @@
         <div class="glass-card">
             <div class="section-title">Быстрые действия</div>
             
-            <button class="action-btn btn-primary-glow" onclick="focusInput('comment')">
-                <span class="material-symbols-outlined">add_comment</span>
-                Добавить комментарий
-            </button>
+            <a href="{% url 'core:payment_create' %}" class="action-btn btn-primary-glow" onclick="event.preventDefault(); window.open('{% url 'core:payment_create' %}?client_id={{ client.pk }}', '_self');">
+                <span class="material-symbols-outlined">add</span>
+                Создать платёж
+            </a>
             
             <button class="action-btn btn-outline" onclick="focusInput('call')">
                 <span class="material-symbols-outlined">phone_callback</span>
@@ -531,6 +531,48 @@
             </button>
         </div>
 
+        {% if payments %}
+        <div class="glass-card" style="margin-top: var(--space-md);">
+            <div class="section-title" style="display:flex; justify-content:space-between; align-items:center;">
+                <span>Платежи</span>
+                <a href="{% url 'core:payments_list' %}?client_id={{ client.pk }}" style="font-size:11px; color:var(--primary); text-decoration:none;">Все →</a>
+            </div>
+            
+            <div style="max-height: 200px; overflow-y: auto; margin-top: 12px;">
+                {% for payment in payments %}
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:8px 0; border-bottom:1px solid var(--glass-border);">
+                    <div style="flex:1;">
+                        <div style="font-size:13px; font-weight:500;">{{ payment.amount|floatformat:0 }} ₽</div>
+                        <div style="font-size:11px; color:var(--text-muted);">{{ payment.created_at|date:"d.m.Y" }}</div>
+                    </div>
+                    <div>
+                        {% if payment.status == 'COMPLETED' %}
+                            <span style="font-size:10px; padding:2px 6px; background:rgba(16,185,129,0.15); color:var(--success); border-radius:4px;">✓</span>
+                        {% elif payment.status == 'PENDING' %}
+                            <span style="font-size:10px; padding:2px 6px; background:rgba(245,158,11,0.15); color:var(--warning); border-radius:4px;">⏳</span>
+                        {% elif payment.status == 'CANCELLED' %}
+                            <span style="font-size:10px; padding:2px 6px; background:rgba(239,68,68,0.15); color:var(--error); border-radius:4px;">✕</span>
+                        {% else %}
+                            <span style="font-size:10px; padding:2px 6px; background:rgba(156,163,175,0.15); color:#9ca3af; border-radius:4px;">↺</span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            
+            <div style="margin-top: 12px; padding-top: 12px; border-top: 1px solid var(--glass-border);">
+                <div style="display:flex; justify-content:space-between; font-size:12px; margin-bottom:4px;">
+                    <span style="color:var(--text-muted);">Всего оплачено:</span>
+                    <span style="color:var(--success); font-weight:600;">{{ total_payments_amount|floatformat:0 }} ₽</span>
+                </div>
+                <div style="display:flex; justify-content:space-between; font-size:12px;">
+                    <span style="color:var(--text-muted);">Платежей:</span>
+                    <span style="color:var(--primary); font-weight:600;">{{ payments.count }}</span>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
         {% if client.tags %}
         <div class="glass-card" style="margin-top: var(--space-md);">
             <div class="section-title">Теги</div>
