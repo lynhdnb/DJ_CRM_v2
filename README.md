@@ -278,9 +278,9 @@ python manage.py test core.tests
 
 MIT License. См. [LICENSE](LICENSE) для деталей.
 
-## 👥 Команда
+## 👥 Автор
 
-- **NLP-Core-Team** — разработка и поддержка
+**LynhDnB** — разработка и поддержка
 
 ## 📞 Поддержка
 
@@ -289,4 +289,4 @@ MIT License. См. [LICENSE](LICENSE) для деталей.
 
 ---
 
-**Made with ❤️ by NLP-Core-Team**
+**Made with ❤️ by LynhDnB**
