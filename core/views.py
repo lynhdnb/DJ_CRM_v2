@@ -240,8 +240,8 @@ def client_detail(request, client_id):
             'id': lesson.id,
         })
     
-    # Сортируем по дате (свежие сверху)
-    log_entries.sort(key=lambda x: x['date_time'], reverse=True)
+    # Сортируем по дате (старые сверху, новые снизу - как в чате)
+    log_entries.sort(key=lambda x: x['date_time'])
     
     # Применяем фильтр
     if log_filter == 'comment':
