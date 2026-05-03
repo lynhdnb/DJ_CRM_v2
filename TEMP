@@ -5,6 +5,7 @@
 
 {% block content %}
 
+<!-- Если переменные темы не определены глобально, этот блок их добавит -->
 <style>
 :root {
     --primary: #00dbe9;
@@ -130,17 +131,6 @@
 .balance-value { font-size: 20px; font-weight: 700; color: var(--primary); }
 
 /* Contacts */
-.contacts-block { margin-top: var(--space-sm); }
-.section-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--glass-border);
-    padding-bottom: 6px;
-}
-
 .contact-item {
     display: flex;
     align-items: center;
@@ -159,7 +149,7 @@
 .chat-container {
     display: flex;
     flex-direction: column;
-    height: calc(100vh - 180px);
+    height: calc(100vh - 180px); /* Фиксированная высота */
 }
 
 .chat-header {
@@ -170,8 +160,6 @@
     border-bottom: 1px solid var(--glass-border);
     margin-bottom: var(--space-sm);
 }
-
-.chat-header h3 { margin: 0; font-size: 16px; }
 
 .chat-filters { display: flex; gap: 6px; }
 
@@ -199,6 +187,8 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--bg-surface) transparent;
 }
 
 /* Chat Bubble */
@@ -214,6 +204,7 @@
 
 .chat-message:hover { background: rgba(255, 255, 255, 0.04); }
 
+/* Типы сообщений (цвет полоски) */
 .message-comment { border-left-color: var(--primary); }
 .message-task { border-left-color: #ecb2ff; }
 .message-call { border-left-color: var(--success); }
@@ -259,7 +250,7 @@
 .tag-badge {
     font-size: 10px;
     padding: 2px 8px;
-    border-radius: 4px;
+    border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.05);
     color: var(--text-muted);
     text-transform: uppercase;
@@ -282,13 +273,12 @@
     border: none;
     color: var(--text-primary);
     padding: 8px 12px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     cursor: pointer;
     outline: none;
-    font-size: 16px;
 }
 
-.chat-input-center {
+.chat-input-center input {
     flex: 1;
     background: transparent;
     border: none;
@@ -303,7 +293,7 @@
     border: none;
     width: 36px;
     height: 36px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     color: #000;
     display: flex;
     align-items: center;
@@ -322,7 +312,7 @@
     gap: 8px;
     width: 100%;
     padding: 10px;
-    border-radius: 6px;
+    border-radius: var(--radius-sm);
     font-size: 13px;
     font-weight: 600;
     text-decoration: none;
@@ -351,6 +341,16 @@
     border-color: var(--text-muted);
 }
 
+.section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+    border-bottom: 1px solid var(--glass-border);
+    padding-bottom: 6px;
+}
+
 .tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
 
 .tag {
@@ -360,24 +360,6 @@
     color: var(--primary);
     border-radius: var(--radius-full);
     font-size: 11px;
-}
-
-/* Stats */
-.stats-grid {
-    display: grid;
-    gap: 8px;
-    font-size: 12px;
-    color: var(--text-muted);
-}
-
-.stats-grid div {
-    display: flex;
-    justify-content: space-between;
-}
-
-.stats-grid span:last-child {
-    color: var(--primary);
-    font-weight: bold;
 }
 
 /* Mobile */
@@ -437,6 +419,12 @@
                     <a href="mailto:{{ client.email }}">{{ client.email }}</a>
                 </div>
                 {% endif %}
+                {% if client.telegram_username %}
+                <div class="contact-item">
+                    <span class="material-symbols-outlined icon">chat</span>
+                    <a href="https://t.me/{{ client.telegram_username }}" target="_blank">@{{ client.telegram_username }}</a>
+                </div>
+                {% endif %}
             </div>
         </div>
     </div>
@@ -445,26 +433,26 @@
     <div class="client-timeline">
         <div class="glass-card chat-container">
             <div class="chat-header">
-                <h3>💬 История</h3>
+                <h3 style="margin:0; font-size: 16px;">💬 История</h3>
                 <div class="chat-filters">
-                    <a href="?filter=all&{{ request.GET.urlencode }}" class="filter-btn {% if log_filter == 'all' or not log_filter %}active{% endif %}">Все</a>
-                    <a href="?filter=comment&{{ request.GET.urlencode }}" class="filter-btn {% if log_filter == 'comment' %}active{% endif %}">Комменты</a>
-                    <a href="?filter=task&{{ request.GET.urlencode }}" class="filter-btn {% if log_filter == 'task' %}active{% endif %}">Задачи</a>
+                    <a href="?filter=all" class="filter-btn {% if log_filter == 'all' or not log_filter %}active{% endif %}">Все</a>
+                    <a href="?filter=comment" class="filter-btn {% if log_filter == 'comment' %}active{% endif %}">Комменты</a>
+                    <a href="?filter=task" class="filter-btn {% if log_filter == 'task' %}active{% endif %}">Задачи</a>
                 </div>
             </div>
             
             <div class="chat-messages" id="chatMessages">
                 {% for entry in log_entries %}
-                <div class="chat-message message-{{ entry.subtype }}">
+                <div class="chat-message message-{{ entry.type|default:'comment' }}">
                     <div class="message-avatar">
                         {% if entry.type == 'lesson' %}🎵
                         {% elif entry.type == 'task' %}📋
-                        {% elif entry.subtype == 'call' %}📞
+                        {% elif entry.type == 'call' %}📞
                         {% else %}💬{% endif %}
                     </div>
                     <div class="message-content">
                         <div class="message-header">
-                            <span class="message-author">{{ entry.created_by.get_full_name|default:entry.created_by|default:"Система" }}</span>
+                            <span class="message-author">{{ entry.created_by.get_full_name|default:entry.created_by.username|default:"Система" }}</span>
                             <span class="message-time">{{ entry.date_time|date:"d.m H:i" }}</span>
                         </div>
                         {% if entry.subject %}
@@ -475,8 +463,8 @@
                         {% endif %}
                         {% if entry.type == 'task' %}
                         <div class="message-meta">
-                            <span class="tag-badge" style="background:rgba(236,178,255,0.15); color:#ecb2ff;">{{ entry.status }}</span>
-                            <span class="tag-badge">{{ entry.priority }}</span>
+                            <span class="tag-badge" style="background:rgba(236,178,255,0.15); color:#ecb2ff;">{{ entry.get_status_display|default:entry.status }}</span>
+                            <span class="tag-badge">{{ entry.get_priority_display|default:entry.priority }}</span>
                         </div>
                         {% endif %}
                     </div>
@@ -510,22 +498,22 @@
         </div>
     </div>
 
-    <!-- ПРАВАЯ КОЛОНКА: Быстрые действия -->
+    <!-- ПРАВАЯ КОЛОНКА: Быстрые действия (Новая!) -->
     <div class="quick-actions-sidebar">
         <div class="glass-card">
             <div class="section-title">Быстрые действия</div>
             
-            <button class="action-btn btn-primary-glow" onclick="focusInput('comment')">
+            <button class="action-btn btn-primary-glow" onclick="document.getElementById('inputContent').focus(); document.getElementById('inputType').value='comment'; updatePlaceholder();">
                 <span class="material-symbols-outlined">add_comment</span>
                 Добавить комментарий
             </button>
             
-            <button class="action-btn btn-outline" onclick="focusInput('call')">
+            <button class="action-btn btn-outline" onclick="document.getElementById('inputContent').focus(); document.getElementById('inputType').value='call'; updatePlaceholder();">
                 <span class="material-symbols-outlined">phone_callback</span>
                 Зафиксировать звонок
             </button>
 
-            <button class="action-btn btn-outline" onclick="focusInput('task')">
+            <button class="action-btn btn-outline" onclick="document.getElementById('inputContent').focus(); document.getElementById('inputType').value='task'; updatePlaceholder();">
                 <span class="material-symbols-outlined">assignment</span>
                 Поставить задачу
             </button>
@@ -547,18 +535,14 @@
         <!-- Статистика -->
         <div class="glass-card" style="margin-top: var(--space-md);">
              <div class="section-title">Статистика</div>
-             <div class="stats-grid">
-                 <div>
-                     <span>Всего взаимодействий:</span>
-                     <span>{{ log_entries|length }}</span>
+             <div style="font-size: 12px; color: var(--text-muted); display: grid; gap: 8px;">
+                 <div style="display:flex; justify-content:space-between;">
+                     <span>Всего звонков:</span>
+                     <span style="color:var(--primary); font-weight:bold;">{{ call_count|default:"0" }}</span>
                  </div>
-                 <div>
-                     <span>Задач выполнено:</span>
-                     <span style="color:var(--success);">{{ tasks|length }}</span>
-                 </div>
-                 <div>
-                     <span>С {{ client.created_at|date:"d.m.y" }}</span>
-                     <span style="color:var(--text-muted);">в CRM</span>
+                 <div style="display:flex; justify-content:space-between;">
+                     <span>Выполнено задач:</span>
+                     <span style="color:var(--success); font-weight:bold;">{{ completed_tasks_count|default:"0" }}</span>
                  </div>
              </div>
         </div>
@@ -574,14 +558,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 
-// Фокус на инпуте
-function focusInput(type) {
-    document.getElementById('inputType').value = type;
-    updatePlaceholder();
-    document.getElementById('inputContent').focus();
-}
-
-// Переключение плейсхолдера
+// Переключение плейсхолдера в инпуте
 function updatePlaceholder() {
     const type = document.getElementById('inputType').value;
     const input = document.getElementById('inputContent');
@@ -614,10 +591,11 @@ function editClientName(el) {
     input.addEventListener('blur', function() {
         const newName = input.value;
         if (newName !== originalText && newName.trim()) {
+            // Тут должен быть AJAX запрос на сохранение
             console.log("Saving name:", newName);
             alert("Функция сохранения имени будет подключена к API");
         }
-        location.reload();
+        location.reload(); // Простая перезагрузка для отмены
     });
     
     input.addEventListener('keypress', function(e) {

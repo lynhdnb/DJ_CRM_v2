@@ -269,12 +269,14 @@ def client_detail(request, client_id):
         'enrollments': enrollments[:10],
         'active_enrollments': active_enrollments,
         'contacts': contacts,
-        'tasks': tasks[:5],
+        'tasks': tasks,
         'total_payments_amount': total_payments_amount,
         'total_remaining_lessons': total_remaining_lessons,
         'total_remaining_practice': total_remaining_practice,
         'log_entries': log_entries,
         'log_filter': log_filter,
+        'call_count': interactions.filter(interaction_type__name__iexact='call').count(),
+        'completed_tasks_count': tasks.filter(status='COMPLETED').count(),
     }
     
     return render(request, 'clients/client_detail.html', context)
