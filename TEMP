@@ -1,12 +1,12 @@
 {% extends 'base.html' %}
 {% load static %}
 
-{% block title %}{{ client }} — MUSERP{% endblock %}
+{% block title %}Платежи — MUSERP{% endblock %}
 
 {% block content %}
 
-<!-- Если переменные темы не определены глобально, этот блок их добавит -->
 <style>
+/* ====== ПЕРЕМЕННЫЕ ТЕМИ ====== */
 :root {
     --primary: #00dbe9;
     --primary-dim: #004f54;
@@ -20,39 +20,41 @@
     --success: #10b981;
     --warning: #f59e0b;
     --error: #ef4444;
-    --radius-md: 12px;
+    --radius-sm: 0.25rem;
+    --radius-md: 0.5rem;
+    --radius-lg: 0.75rem;
     --radius-full: 9999px;
-    --space-md: 24px;
-    --space-sm: 16px;
     --space-xs: 8px;
+    --space-sm: 16px;
+    --space-md: 24px;
+    --space-lg: 40px;
 }
 
-/* Основной контейнер */
-.client-detail-grid {
-    display: grid;
-    grid-template-columns: 300px 1fr 280px;
-    gap: var(--space-md);
-    min-height: calc(100vh - 120px);
-    padding: var(--space-md);
-    animation: fadeIn 0.5s ease-out;
+/* ====== БАЗОВЫЕ СТИЛИ ====== */
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+    font-family: 'Manrope', -apple-system, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+    line-height: 1.5;
 }
 
-@keyframes fadeIn {
-    from { opacity: 0; transform: translateY(10px); }
-    to { opacity: 1; transform: translateY(0); }
+h1, h2, h3, .font-headline {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 600;
 }
 
-/* === GLASS CARD === */
+/* ====== GLASS CARD ====== */
 .glass-card {
     background: var(--glass-bg);
     backdrop-filter: blur(16px);
     border: 1px solid var(--glass-border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius-lg);
     padding: var(--space-md);
     box-shadow: 0 4px 30px rgba(0, 0, 0, 0.3);
     transition: all 0.3s ease;
-    position: relative;
-    overflow: hidden;
+    margin-bottom: var(--space-md);
 }
 
 .glass-card:hover {
@@ -60,548 +62,662 @@
     box-shadow: 0 0 20px rgba(0, 219, 233, 0.1);
 }
 
-/* === LEFT COLUMN: PROFILE === */
-.profile-header {
-    text-align: center;
-    margin-bottom: var(--space-md);
+/* ====== PAGE HEADER ====== */
+.page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--glass-border);
 }
 
-.profile-avatar {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto var(--space-sm);
-    border-radius: var(--radius-full);
-    border: 2px solid var(--primary);
-    box-shadow: 0 0 15px rgba(0, 219, 233, 0.3);
-    overflow: hidden;
-    background: var(--bg-surface);
+.page-header h1 {
+    font-size: 28px;
+    color: var(--primary);
+    text-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
     display: flex;
     align-items: center;
-    justify-content: center;
+    gap: var(--space-sm);
 }
 
-.profile-avatar img { width: 100%; height: 100%; object-fit: cover; }
-.avatar-placeholder { font-size: 32px; font-weight: 700; color: var(--primary); }
+.page-header p {
+    color: var(--text-muted);
+    margin-top: 4px;
+}
 
-.profile-name h2 {
-    font-size: 18px;
-    margin-bottom: 4px;
-    cursor: text;
-    display: inline-flex;
+.page-actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+.btn-primary {
+    padding: 10px 20px;
+    background: linear-gradient(135deg, var(--primary), #00b8c4);
+    color: #000;
+    border: none;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    cursor: pointer;
+    display: flex;
     align-items: center;
-    gap: 6px;
-    transition: color 0.2s;
+    gap: 8px;
+    transition: all 0.2s;
+    box-shadow: 0 0 15px rgba(0, 219, 233, 0.3);
+    text-decoration: none;
 }
 
-.profile-name h2:hover { color: var(--primary); }
-.profile-name h2 .edit-icon { opacity: 0; font-size: 14px; transition: opacity 0.2s; }
-.profile-name h2:hover .edit-icon { opacity: 0.6; }
+.btn-primary:hover {
+    transform: scale(1.02);
+    box-shadow: 0 0 25px rgba(0, 219, 233, 0.5);
+}
 
-.status-badge {
-    display: inline-block;
-    padding: 4px 12px;
-    border-radius: var(--radius-full);
-    font-size: 11px;
+/* ====== STATS SUMMARY ====== */
+.stats-summary {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.stat-card {
+    padding: var(--space-md);
+    background: var(--glass-bg);
+    backdrop-filter: blur(16px);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-lg);
+    position: relative;
+    overflow: hidden;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    border-color: rgba(0, 219, 233, 0.3);
+    transform: translateY(-2px);
+}
+
+.stat-card .icon-bg {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    font-size: 80px;
+    color: var(--primary);
+    opacity: 0.08;
+    pointer-events: none;
+}
+
+.stat-label {
+    font-size: 12px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 8px;
+}
+
+.stat-value {
+    font-size: 28px;
     font-weight: 700;
+    font-family: 'Space Grotesk', sans-serif;
+    color: var(--primary);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.stat-value.success { color: var(--success); }
+.stat-value.warning { color: var(--warning); }
+.stat-value.error { color: var(--error); }
+
+/* ====== FILTERS ====== */
+.filters-card {
+    padding: var(--space-md);
+    margin-bottom: var(--space-lg);
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: var(--space-sm);
+    margin-bottom: var(--space-sm);
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.filter-group label {
+    font-size: 11px;
+    color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
-.status-active { background: rgba(16, 185, 129, 0.15); color: var(--success); }
-.status-new { background: rgba(0, 219, 233, 0.15); color: var(--primary); }
-.status-inactive { background: rgba(255, 255, 255, 0.05); color: var(--text-muted); }
-
-/* Balance */
-.profile-balance {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
-}
-
-.balance-mini {
-    background: rgba(255, 255, 255, 0.03);
-    border-radius: var(--radius-md);
-    padding: 10px;
-    text-align: center;
-    border: 1px solid var(--glass-border);
-}
-
-.balance-label { display: block; font-size: 10px; color: var(--text-muted); margin-bottom: 2px; text-transform: uppercase; }
-.balance-value { font-size: 20px; font-weight: 700; color: var(--primary); }
-
-/* Contacts */
-.contact-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 8px 0;
-    border-bottom: 1px solid var(--glass-border);
-    font-size: 13px;
-}
-
-.contact-item:last-child { border-bottom: none; }
-.contact-item .icon { color: var(--primary); }
-.contact-item a { color: var(--text-primary); text-decoration: none; transition: color 0.2s; }
-.contact-item a:hover { color: var(--primary); }
-
-/* === CENTER COLUMN: CHAT === */
-.chat-container {
-    display: flex;
-    flex-direction: column;
-    height: calc(100vh - 180px); /* Фиксированная высота */
-}
-
-.chat-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding-bottom: var(--space-sm);
-    border-bottom: 1px solid var(--glass-border);
-    margin-bottom: var(--space-sm);
-}
-
-.chat-filters { display: flex; gap: 6px; }
-
-.filter-btn {
-    padding: 6px 12px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid transparent;
-    border-radius: var(--radius-full);
-    color: var(--text-muted);
-    text-decoration: none;
-    font-size: 12px;
-    transition: all 0.2s;
-}
-
-.filter-btn:hover, .filter-btn.active {
-    background: rgba(0, 219, 233, 0.1);
-    color: var(--primary);
-    border-color: var(--primary);
-}
-
-.chat-messages {
-    flex: 1;
-    overflow-y: auto;
-    padding: var(--space-sm);
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    scrollbar-width: thin;
-    scrollbar-color: var(--bg-surface) transparent;
-}
-
-/* Chat Bubble */
-.chat-message {
-    display: flex;
-    gap: 12px;
-    padding: 12px;
-    background: rgba(255, 255, 255, 0.02);
-    border-radius: var(--radius-md);
-    border-left: 3px solid var(--text-muted);
-    transition: background 0.2s;
-}
-
-.chat-message:hover { background: rgba(255, 255, 255, 0.04); }
-
-/* Типы сообщений (цвет полоски) */
-.message-comment { border-left-color: var(--primary); }
-.message-task { border-left-color: #ecb2ff; }
-.message-call { border-left-color: var(--success); }
-.message-lesson { border-left-color: var(--warning); }
-
-.message-avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-full);
-    background: linear-gradient(135deg, var(--bg-surface), var(--bg-primary));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 18px;
-    flex-shrink: 0;
-    border: 1px solid var(--glass-border);
-}
-
-.message-content { flex: 1; min-width: 0; }
-
-.message-header {
-    display: flex;
-    justify-content: space-between;
-    margin-bottom: 4px;
-}
-
-.message-author { font-weight: 600; color: var(--primary); font-size: 13px; }
-.message-time { font-size: 10px; color: var(--text-muted); }
-
-.message-note {
-    font-size: 13px;
-    color: var(--text-primary);
-    line-height: 1.4;
-    margin-bottom: 6px;
-}
-
-.message-meta {
-    display: flex;
-    gap: 6px;
-    margin-top: 8px;
-}
-
-.tag-badge {
-    font-size: 10px;
-    padding: 2px 8px;
-    border-radius: var(--radius-sm);
-    background: rgba(255, 255, 255, 0.05);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    font-weight: 600;
-}
-
-/* Chat Input */
-.chat-input-wrapper {
-    margin-top: var(--space-sm);
-    display: flex;
-    gap: var(--space-xs);
-    background: var(--bg-surface);
-    padding: 8px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--glass-border);
-}
-
-.chat-input-left select {
-    background: var(--bg-primary);
-    border: none;
-    color: var(--text-primary);
+.filter-group select,
+.filter-group input {
     padding: 8px 12px;
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    outline: none;
-}
-
-.chat-input-center input {
-    flex: 1;
-    background: transparent;
-    border: none;
-    color: var(--text-primary);
-    padding: 0 8px;
-    outline: none;
-    font-size: 14px;
-}
-
-.send-button {
-    background: var(--primary);
-    border: none;
-    width: 36px;
-    height: 36px;
-    border-radius: var(--radius-sm);
-    color: #000;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: transform 0.2s;
-}
-
-.send-button:hover { transform: scale(1.05); }
-
-/* === RIGHT COLUMN: ACTIONS === */
-.action-btn {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    width: 100%;
-    padding: 10px;
-    border-radius: var(--radius-sm);
-    font-size: 13px;
-    font-weight: 600;
-    text-decoration: none;
-    margin-bottom: 8px;
-    transition: all 0.2s;
-    cursor: pointer;
-    border: none;
-}
-
-.btn-primary-glow {
-    background: linear-gradient(135deg, var(--primary), #00b8c4);
-    color: #000;
-    box-shadow: 0 0 15px rgba(0, 219, 233, 0.2);
-}
-
-.btn-primary-glow:hover { box-shadow: 0 0 25px rgba(0, 219, 233, 0.4); }
-
-.btn-outline {
-    background: transparent;
+    background: var(--bg-primary);
     border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
     color: var(--text-primary);
+    font-size: 13px;
+    transition: all 0.2s;
 }
 
-.btn-outline:hover {
-    background: rgba(255, 255, 255, 0.05);
+.filter-group select:focus,
+.filter-group input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 10px rgba(0, 219, 233, 0.2);
+}
+
+.filters-actions {
+    display: flex;
+    gap: var(--space-sm);
+    align-items: center;
+}
+
+.btn-filter {
+    padding: 8px 16px;
+    background: var(--primary);
+    color: #000;
+    border: none;
+    border-radius: var(--radius-sm);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-filter:hover {
+    box-shadow: 0 0 15px rgba(0, 219, 233, 0.4);
+}
+
+.btn-clear {
+    padding: 8px 16px;
+    background: transparent;
+    color: var(--text-muted);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s;
+}
+
+.btn-clear:hover {
+    color: var(--text-primary);
     border-color: var(--text-muted);
 }
 
-.section-title {
-    font-size: 12px;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin-bottom: 12px;
-    letter-spacing: 1px;
-    border-bottom: 1px solid var(--glass-border);
-    padding-bottom: 6px;
+/* ====== TABLE ====== */
+.table-container {
+    overflow-x: auto;
+    border-radius: var(--radius-lg);
 }
 
-.tag-cloud { display: flex; flex-wrap: wrap; gap: 6px; }
+.payments-table {
+    width: 100%;
+    border-collapse: collapse;
+}
 
-.tag {
-    padding: 4px 10px;
+.payments-table th {
+    text-align: left;
+    padding: 12px;
+    color: var(--text-muted);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--glass-border);
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.payments-table td {
+    padding: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    font-size: 13px;
+}
+
+.payments-table tr {
+    transition: all 0.2s;
+}
+
+.payments-table tr:hover {
     background: rgba(0, 219, 233, 0.05);
-    border: 1px solid rgba(0, 219, 233, 0.2);
+}
+
+.amount {
+    font-weight: 600;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
     color: var(--primary);
+}
+
+.amount.pending {
+    color: var(--warning);
+}
+
+.amount.refunded {
+    color: var(--text-muted);
+    text-decoration: line-through;
+}
+
+/* ====== STATUS BADGES ====== */
+.status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 10px;
     border-radius: var(--radius-full);
     font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
 }
 
-/* Mobile */
-@media (max-width: 1200px) {
-    .client-detail-grid { grid-template-columns: 1fr; }
-    .chat-container { height: auto; min-height: 400px; }
-    .profile-balance { grid-template-columns: 1fr 1fr; }
+.status-completed { 
+    background: rgba(16, 185, 129, 0.15); 
+    color: var(--success);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.status-pending { 
+    background: rgba(245, 158, 11, 0.15); 
+    color: var(--warning);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.status-cancelled { 
+    background: rgba(239, 68, 68, 0.15); 
+    color: var(--error);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.status-refunded { 
+    background: rgba(156, 163, 175, 0.15); 
+    color: #9ca3af;
+    border: 1px solid rgba(156, 163, 175, 0.3);
+}
+
+/* ====== ACTIONS ====== */
+.actions-cell {
+    display: flex;
+    gap: 4px;
+}
+
+.btn-action {
+    padding: 4px 8px;
+    background: transparent;
+    border: 1px solid var(--glass-border);
+    border-radius: 4px;
+    color: var(--text-muted);
+    font-size: 11px;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.btn-action:hover {
+    background: var(--primary);
+    color: #000;
+    border-color: var(--primary);
+}
+
+.btn-action.danger:hover {
+    background: var(--error);
+    color: #fff;
+    border-color: var(--error);
+}
+
+.btn-action.success:hover {
+    background: var(--success);
+    color: #fff;
+    border-color: var(--success);
+}
+
+/* ====== EMPTY STATE ====== */
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--text-muted);
+}
+
+.empty-state .icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+    opacity: 0.5;
+}
+
+.empty-state p {
+    font-size: 14px;
+    margin-bottom: 20px;
+}
+
+/* ====== CLIENT LINK ====== */
+.client-link {
+    color: var(--text-primary);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    transition: color 0.2s;
+}
+
+.client-link:hover {
+    color: var(--primary);
+}
+
+.client-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--primary), var(--secondary));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 600;
+    color: #000;
+}
+
+/* ====== INVOICE NUMBER ====== */
+.invoice-number {
+    font-family: 'Space Grotesk', monospace;
+    font-weight: 600;
+    color: var(--primary);
+    background: rgba(0, 219, 233, 0.1);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+/* ====== MOBILE ====== */
+@media (max-width: 768px) {
+    .page-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: var(--space-sm);
+    }
+    
+    .stats-summary {
+        grid-template-columns: 1fr;
+    }
+    
+    .filters-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .payments-table th:nth-child(4),
+    .payments-table td:nth-child(4),
+    .payments-table th:nth-child(6),
+    .payments-table td:nth-child(6),
+    .payments-table th:nth-child(7),
+    .payments-table td:nth-child(7) {
+        display: none;
+    }
 }
 </style>
 
-<div class="client-detail-grid">
+<!-- PAGE HEADER -->
+<div class="page-header">
+    <div>
+        <h1>
+            <span class="material-symbols-outlined">payments</span>
+            Платежи
+        </h1>
+        <p>Управление финансовыми операциями школы</p>
+    </div>
+    <div class="page-actions">
+        <a href="{% url 'core:payment_create' %}" class="btn-primary">
+            <span class="material-symbols-outlined">add</span>
+            Новый платёж
+        </a>
+    </div>
+</div>
+
+<!-- STATS SUMMARY -->
+<div class="stats-summary">
+    <div class="stat-card">
+        <span class="material-symbols-outlined icon-bg">check_circle</span>
+        <div class="stat-label">Всего оплачено</div>
+        <div class="stat-value success">
+            {{ total_amount|floatformat:0 }} ₽
+        </div>
+    </div>
     
-    <!-- ЛЕВАЯ КОЛОНКА: Профиль клиента -->
-    <div class="client-profile-sidebar">
-        <div class="glass-card">
-            <div class="profile-header">
-                <div class="profile-avatar">
-                    {% if client.photo %}
-                    <img src="{{ client.photo.url }}" alt="{{ client }}">
-                    {% else %}
-                    <div class="avatar-placeholder">
-                        {{ client.last_name|slice:":1" }}{{ client.first_name|slice:":1" }}
-                    </div>
-                    {% endif %}
-                </div>
-                <div class="profile-name">
-                    <h2 onclick="editClientName(this)">
-                        {{ client.last_name }} {{ client.first_name }}
-                        <span class="material-symbols-outlined edit-icon">edit</span>
-                    </h2>
-                    <span class="status-badge status-{{ client.status|lower }}">
-                        {{ client.get_status_display }}
-                    </span>
-                </div>
-            </div>
-            
-            <div class="profile-balance">
-                <div class="balance-mini">
-                    <span class="balance-label">Уроков</span>
-                    <span class="balance-value">{{ total_remaining_lessons|default:"0" }}</span>
-                </div>
-                <div class="balance-mini">
-                    <span class="balance-label">Практика</span>
-                    <span class="balance-value">{{ total_remaining_practice|default:"0" }} ч.</span>
-                </div>
-            </div>
-            
-            <div class="contacts-block">
-                <div class="section-title">Контакты</div>
-                <div class="contact-item">
-                    <span class="material-symbols-outlined icon">phone</span>
-                    <a href="tel:{{ client.phone }}">{{ client.phone }}</a>
-                </div>
-                {% if client.email %}
-                <div class="contact-item">
-                    <span class="material-symbols-outlined icon">email</span>
-                    <a href="mailto:{{ client.email }}">{{ client.email }}</a>
-                </div>
-                {% endif %}
-                {% if client.telegram_username %}
-                <div class="contact-item">
-                    <span class="material-symbols-outlined icon">chat</span>
-                    <a href="https://t.me/{{ client.telegram_username }}" target="_blank">@{{ client.telegram_username }}</a>
-                </div>
-                {% endif %}
-            </div>
+    <div class="stat-card">
+        <span class="material-symbols-outlined icon-bg">schedule</span>
+        <div class="stat-label">Ожидает оплаты</div>
+        <div class="stat-value warning">
+            {{ pending_amount|floatformat:0 }} ₽
         </div>
     </div>
-
-    <!-- ЦЕНТРАЛЬНАЯ КОЛОНКА: Лог взаимодействий (Чат) -->
-    <div class="client-timeline">
-        <div class="glass-card chat-container">
-            <div class="chat-header">
-                <h3 style="margin:0; font-size: 16px;">💬 История</h3>
-                <div class="chat-filters">
-                    <a href="?filter=all" class="filter-btn {% if log_filter == 'all' or not log_filter %}active{% endif %}">Все</a>
-                    <a href="?filter=comment" class="filter-btn {% if log_filter == 'comment' %}active{% endif %}">Комменты</a>
-                    <a href="?filter=task" class="filter-btn {% if log_filter == 'task' %}active{% endif %}">Задачи</a>
-                </div>
-            </div>
-            
-            <div class="chat-messages" id="chatMessages">
-                {% for entry in log_entries %}
-                <div class="chat-message message-{{ entry.type|default:'comment' }}">
-                    <div class="message-avatar">
-                        {% if entry.type == 'lesson' %}🎵
-                        {% elif entry.type == 'task' %}📋
-                        {% elif entry.type == 'call' %}📞
-                        {% else %}💬{% endif %}
-                    </div>
-                    <div class="message-content">
-                        <div class="message-header">
-                            <span class="message-author">{{ entry.created_by.get_full_name|default:entry.created_by.username|default:"Система" }}</span>
-                            <span class="message-time">{{ entry.date_time|date:"d.m H:i" }}</span>
-                        </div>
-                        {% if entry.subject %}
-                        <div style="font-weight:600; margin-bottom:4px; font-size:13px;">{{ entry.subject }}</div>
-                        {% endif %}
-                        {% if entry.note %}
-                        <div class="message-note">{{ entry.note }}</div>
-                        {% endif %}
-                        {% if entry.type == 'task' %}
-                        <div class="message-meta">
-                            <span class="tag-badge" style="background:rgba(236,178,255,0.15); color:#ecb2ff;">{{ entry.get_status_display|default:entry.status }}</span>
-                            <span class="tag-badge">{{ entry.get_priority_display|default:entry.priority }}</span>
-                        </div>
-                        {% endif %}
-                    </div>
-                </div>
-                {% empty %}
-                <div style="text-align:center; padding:40px; color:var(--text-muted);">
-                    <div style="font-size:40px; margin-bottom:10px;">👋</div>
-                    <p>История чиста. Оставьте первый комментарий!</p>
-                </div>
-                {% endfor %}
-            </div>
-
-            <!-- Поле ввода -->
-            <div class="chat-input-wrapper">
-                <div class="chat-input-left">
-                    <select name="type" id="inputType" onchange="updatePlaceholder()">
-                        <option value="comment">💬</option>
-                        <option value="call">📞</option>
-                        <option value="task">📋</option>
-                    </select>
-                </div>
-                <form action="{% url 'core:create_interaction' client.pk %}" method="POST" style="flex:1; display:flex; gap:8px;">
-                    {% csrf_token %}
-                    <input type="hidden" name="type" id="hiddenType" value="comment">
-                    <input type="text" name="content" id="inputContent" class="chat-input-center" placeholder="Написать комментарий..." required autocomplete="off">
-                    <button type="submit" class="send-button">
-                        <span class="material-symbols-outlined">send</span>
-                    </button>
-                </form>
-            </div>
+    
+    <div class="stat-card">
+        <span class="material-symbols-outlined icon-bg">list</span>
+        <div class="stat-label">Всего платежей</div>
+        <div class="stat-value">
+            {{ payments.count }}
         </div>
     </div>
-
-    <!-- ПРАВАЯ КОЛОНКА: Быстрые действия (Новая!) -->
-    <div class="quick-actions-sidebar">
-        <div class="glass-card">
-            <div class="section-title">Быстрые действия</div>
-            
-            <button class="action-btn btn-primary-glow" onclick="document.getElementById('inputContent').focus(); document.getElementById('inputType').value='comment'; updatePlaceholder();">
-                <span class="material-symbols-outlined">add_comment</span>
-                Добавить комментарий
-            </button>
-            
-            <button class="action-btn btn-outline" onclick="document.getElementById('inputContent').focus(); document.getElementById('inputType').value='call'; updatePlaceholder();">
-                <span class="material-symbols-outlined">phone_callback</span>
-                Зафиксировать звонок
-            </button>
-
-            <button class="action-btn btn-outline" onclick="document.getElementById('inputContent').focus(); document.getElementById('inputType').value='task'; updatePlaceholder();">
-                <span class="material-symbols-outlined">assignment</span>
-                Поставить задачу
-            </button>
-        </div>
-
-        {% if client.tags %}
-        <div class="glass-card" style="margin-top: var(--space-md);">
-            <div class="section-title">Теги</div>
-            <div class="tag-cloud">
-                {% for tag in client.tags|cut:"," %}
-                {% if tag %}
-                <span class="tag">{{ tag }}</span>
-                {% endif %}
-                {% endfor %}
-            </div>
-        </div>
-        {% endif %}
-        
-        <!-- Статистика -->
-        <div class="glass-card" style="margin-top: var(--space-md);">
-             <div class="section-title">Статистика</div>
-             <div style="font-size: 12px; color: var(--text-muted); display: grid; gap: 8px;">
-                 <div style="display:flex; justify-content:space-between;">
-                     <span>Всего звонков:</span>
-                     <span style="color:var(--primary); font-weight:bold;">{{ call_count|default:"0" }}</span>
-                 </div>
-                 <div style="display:flex; justify-content:space-between;">
-                     <span>Выполнено задач:</span>
-                     <span style="color:var(--success); font-weight:bold;">{{ completed_tasks_count|default:"0" }}</span>
-                 </div>
-             </div>
+    
+    <div class="stat-card">
+        <span class="material-symbols-outlined icon-bg">trending_up</span>
+        <div class="stat-label">Средний чек</div>
+        <div class="stat-value">
+            {% if payments.count > 0 %}
+                {{ average_amount|floatformat:0 }} ₽
+            {% else %}
+                0 ₽
+            {% endif %}
         </div>
     </div>
 </div>
 
-<script>
-// Скролл вниз при загрузке
-document.addEventListener('DOMContentLoaded', function() {
-    const chatMessages = document.getElementById('chatMessages');
-    if (chatMessages) {
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    }
-});
+<!-- FILTERS -->
+<div class="glass-card filters-card">
+    <form method="get" action="{% url 'core:payments_list' %}">
+        <div class="filters-grid">
+            <div class="filter-group">
+                <label>Статус</label>
+                <select name="status">
+                    <option value="">Все статусы</option>
+                    {% for value, label in statuses %}
+                        <option value="{{ value }}" {% if current_status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Клиент</label>
+                <select name="client_id">
+                    <option value="">Все клиенты</option>
+                    {% for client in clients %}
+                        <option value="{{ client.pk }}" {% if current_client == client.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ client.last_name }} {{ client.first_name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Способ оплаты</label>
+                <select name="method_id">
+                    <option value="">Все способы</option>
+                    {% for method in methods %}
+                        <option value="{{ method.pk }}" {% if current_method == method.pk|stringformat:"s" %}selected{% endif %}>
+                            {{ method.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>Тип оплаты</label>
+                <select name="payment_type">
+                    <option value="">Все типы</option>
+                    {% for value, label in payment_types %}
+                        <option value="{{ value }}" {% if current_payment_type == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label>С</label>
+                <input type="date" name="date_from" value="{{ date_from }}">
+            </div>
+            
+            <div class="filter-group">
+                <label>По</label>
+                <input type="date" name="date_to" value="{{ date_to }}">
+            </div>
+            
+            <div class="filter-group">
+                <label>Поиск</label>
+                <input type="text" name="search" placeholder="Счёт, клиент..." value="{{ search_query }}">
+            </div>
+        </div>
+        
+        <div class="filters-actions">
+            <button type="submit" class="btn-filter">
+                <span class="material-symbols-outlined">search</span>
+                Применить
+            </button>
+            <a href="{% url 'core:payments_list' %}" class="btn-clear">
+                <span class="material-symbols-outlined">refresh</span>
+                Сбросить
+            </a>
+        </div>
+    </form>
+</div>
 
-// Переключение плейсхолдера в инпуте
-function updatePlaceholder() {
-    const type = document.getElementById('inputType').value;
-    const input = document.getElementById('inputContent');
-    const hiddenInput = document.getElementById('hiddenType');
-    
-    hiddenInput.value = type;
-    
-    if (type === 'comment') input.placeholder = "Написать комментарий...";
-    else if (type === 'call') input.placeholder = "Результат звонка...";
-    else if (type === 'task') input.placeholder = "Описание задачи...";
-}
-
-// Редактирование имени
-function editClientName(el) {
-    const originalText = el.innerText.replace('edit', '').trim();
-    const input = document.createElement('input');
-    input.type = 'text';
-    input.value = originalText;
-    input.style.background = 'transparent';
-    input.style.border = 'none';
-    input.style.color = 'var(--text-primary)';
-    input.style.fontSize = '18px';
-    input.style.fontWeight = 'bold';
-    input.style.width = '100%';
-    input.style.textAlign = 'center';
-    
-    el.parentNode.replaceChild(input, el);
-    input.focus();
-    
-    input.addEventListener('blur', function() {
-        const newName = input.value;
-        if (newName !== originalText && newName.trim()) {
-            // Тут должен быть AJAX запрос на сохранение
-            console.log("Saving name:", newName);
-            alert("Функция сохранения имени будет подключена к API");
-        }
-        location.reload(); // Простая перезагрузка для отмены
-    });
-    
-    input.addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') this.blur();
-    });
-}
-</script>
+<!-- PAYMENTS TABLE -->
+<div class="glass-card table-container">
+    {% if payments %}
+    <table class="payments-table">
+        <thead>
+            <tr>
+                <th>Счёт</th>
+                <th>Дата</th>
+                <th>Клиент</th>
+                <th>Сумма</th>
+                <th>Статус</th>
+                <th>Способ</th>
+                <th>Тип</th>
+                <th>Действия</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td>
+                    <span class="invoice-number">
+                        {{ payment.invoice_number|default:"—" }}
+                    </span>
+                </td>
+                <td>
+                    <div style="font-weight: 500;">
+                        {{ payment.created_at|date:"d.m.Y" }}
+                    </div>
+                    <div style="font-size: 11px; color: var(--text-muted);">
+                        {{ payment.created_at|date:"H:i" }}
+                    </div>
+                </td>
+                <td>
+                    <a href="{% url 'core:client_detail' payment.client.pk %}" class="client-link">
+                        <div class="client-avatar">
+                            {{ payment.client.last_name|slice:":1" }}{{ payment.client.first_name|slice:":1" }}
+                        </div>
+                        {{ payment.client.last_name }} {{ payment.client.first_name|slice:":1" }}.
+                    </a>
+                </td>
+                <td>
+                    <span class="amount {% if payment.status == 'PENDING' %}pending{% elif payment.status == 'REFUNDED' %}refunded{% endif %}">
+                        {{ payment.amount|floatformat:0 }} ₽
+                    </span>
+                </td>
+                <td>
+                    {% if payment.status == 'COMPLETED' %}
+                        <span class="status-badge status-completed">
+                            <span class="material-symbols-outlined" style="font-size: 12px; margin-right: 4px;">check</span>
+                            Оплачено
+                        </span>
+                    {% elif payment.status == 'PENDING' %}
+                        <span class="status-badge status-pending">
+                            <span class="material-symbols-outlined" style="font-size: 12px; margin-right: 4px;">schedule</span>
+                            Ожидает
+                        </span>
+                    {% elif payment.status == 'CANCELLED' %}
+                        <span class="status-badge status-cancelled">
+                            <span class="material-symbols-outlined" style="font-size: 12px; margin-right: 4px;">cancel</span>
+                            Отменено
+                        </span>
+                    {% elif payment.status == 'REFUNDED' %}
+                        <span class="status-badge status-refunded">
+                            <span class="material-symbols-outlined" style="font-size: 12px; margin-right: 4px;">undo</span>
+                            Возврат
+                        </span>
+                    {% endif %}
+                </td>
+                <td>
+                    <span style="display: inline-flex; align-items: center; gap: 6px;">
+                        {% if payment.method %}
+                            <span class="material-symbols-outlined" style="font-size: 16px; color: var(--text-muted);">
+                                {% if 'card' in payment.method.name|lower %}credit_card
+                                {% elif 'cash' in payment.method.name|lower %}payments
+                                {% elif 'transfer' in payment.method.name|lower %}account_balance
+                                {% else %}payment{% endif %}
+                            </span>
+                            {{ payment.method.name }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </span>
+                </td>
+                <td>
+                    {{ payment.get_payment_type_display }}
+                </td>
+                <td>
+                    <div class="actions-cell">
+                        <a href="{% url 'core:payment_detail' payment.pk %}" class="btn-action" title="Подробнее">
+                            <span class="material-symbols-outlined">visibility</span>
+                        </a>
+                        {% if payment.status == 'PENDING' %}
+                        <a href="{% url 'core:payment_pay' payment.pk %}" class="btn-action success" title="Оплатить">
+                            <span class="material-symbols-outlined">check</span>
+                        </a>
+                        {% endif %}
+                        <a href="{% url 'core:payment_update' payment.pk %}" class="btn-action" title="Редактировать">
+                            <span class="material-symbols-outlined">edit</span>
+                        </a>
+                        <a href="{% url 'core:payment_delete' payment.pk %}" class="btn-action danger" title="Удалить" 
+                           onclick="return confirm('Удалить платёж? Это действие нельзя отменить.')">
+                            <span class="material-symbols-outlined">delete</span>
+                        </a>
+                    </div>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+        <div class="icon">
+            <span class="material-symbols-outlined" style="font-size: 64px;">payments</span>
+        </div>
+        <h3 style="margin-bottom: 8px; color: var(--text-primary);">Платежи отсутствуют</h3>
+        <p>Здесь будут отображаться финансовые операции после создания первого платежа.</p>
+        <a href="{% url 'core:payment_create' %}" class="btn-primary" style="display: inline-flex;">
+            <span class="material-symbols-outlined">add</span>
+            Создать первый платёж
+        </a>
+    </div>
+    {% endif %}
+</div>
 
 {% endblock %}

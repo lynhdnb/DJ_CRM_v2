@@ -30,6 +30,11 @@ urlpatterns = [
     
     # Платежи
     path('payments/', views.payments_list, name='payments_list'),
+    path('payments/create/', views.payment_create, name='payment_create'),
+    path('payments/<int:payment_id>/', views.payment_detail, name='payment_detail'),
+    path('payments/<int:payment_id>/edit/', views.payment_update, name='payment_update'),
+    path('payments/<int:payment_id>/delete/', views.payment_delete, name='payment_delete'),
+    path('payments/<int:payment_id>/pay/', views.payment_pay, name='payment_pay'),
     
     # Задачи
     path('tasks/', views.tasks_list, name='tasks_list'),

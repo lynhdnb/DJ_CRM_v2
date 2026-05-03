@@ -10,7 +10,7 @@ from decimal import Decimal
 from .models import Client, RoleAssignment, EmployeeProfile, Course, CourseCategory, Enrollment
 from interactions.models import Interaction, Notification
 from lessons.models import Lesson
-from payments.models import Payment, Invoice
+from payments.models import Payment, Invoice, PaymentMethod
 from tasks.models import Task
 
 
@@ -407,20 +407,239 @@ def payments_list(request):
     if not request.user.is_superuser and user_roles and not user_roles.role.can_view_finance:
         return redirect('core:dashboard')
     
+    # Фильтры
     status = request.GET.get('status')
+    client_id = request.GET.get('client_id')
+    method_id = request.GET.get('method_id')
+    payment_type = request.GET.get('payment_type')
+    search = request.GET.get('search', '')
+    date_from = request.GET.get('date_from')
+    date_to = request.GET.get('date_to')
     
-    payments = Payment.objects.all()
+    payments = Payment.objects.select_related('client', 'method', 'enrollment', 'contract').all()
     
+    # Применяем фильтры
     if status:
         payments = payments.filter(status=status)
     
+    if client_id:
+        payments = payments.filter(client_id=client_id)
+    
+    if method_id:
+        payments = payments.filter(method_id=method_id)
+    
+    if payment_type:
+        payments = payments.filter(payment_type=payment_type)
+    
+    if search:
+        payments = payments.filter(
+            Q(invoice_number__icontains=search) |
+            Q(description__icontains=search) |
+            Q(client__last_name__icontains=search) |
+            Q(client__first_name__icontains=search) |
+            Q(client__phone__icontains=search)
+        )
+    
+    if date_from:
+        from datetime import datetime
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            payments = payments.filter(created_at__date__gte=date_from_obj)
+        except (ValueError, TypeError):
+            pass
+    
+    if date_to:
+        from datetime import datetime
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            payments = payments.filter(created_at__date__lte=date_to_obj)
+        except (ValueError, TypeError):
+            pass
+    
+    # Сортировка по дате создания (новые сверху)
+    payments = payments.order_by('-created_at')
+    
+    # Статистика для дашборда
+    total_amount = payments.filter(status='COMPLETED').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    pending_amount = payments.filter(status='PENDING').aggregate(total=Sum('amount'))['total'] or Decimal('0.00')
+    
     context = {
-        'payments': payments.order_by('-created_at'),
+        'payments': payments,
         'statuses': Payment.STATUS_CHOICES,
+        'payment_types': Payment.PAYMENT_TYPE_CHOICES,
         'current_status': status,
+        'current_client': client_id,
+        'current_method': method_id,
+        'current_payment_type': payment_type,
+        'search_query': search,
+        'date_from': date_from,
+        'date_to': date_to,
+        'total_amount': total_amount,
+        'pending_amount': pending_amount,
+        'clients': Client.objects.filter(is_active=True).order_by('last_name'),
+        'methods': PaymentMethod.objects.filter(is_active=True).order_by('name'),
     }
     
     return render(request, 'payments/payment_list.html', context)
+
+
+@login_required
+def payment_create(request):
+    """Создание платежа"""
+    
+    user_roles = RoleAssignment.objects.filter(user=request.user, is_primary=True).select_related('role').first()
+    
+    # Проверка прав
+    if not request.user.is_superuser and user_roles and not user_roles.role.can_edit_clients:
+        return redirect('core:dashboard')
+    
+    if request.method == 'POST':
+        client_id = request.POST.get('client_id')
+        client = get_object_or_404(Client, pk=client_id, is_active=True)
+        
+        amount = Decimal(request.POST.get('amount', 0))
+        method_id = request.POST.get('method_id')
+        payment_type = request.POST.get('payment_type', 'ONCE')
+        description = request.POST.get('description', '')
+        due_date_str = request.POST.get('due_date')
+        
+        # Парсим дату
+        from datetime import datetime
+        try:
+            due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date() if due_date_str else None
+        except (ValueError, TypeError):
+            due_date = None
+        
+        # Создаем платёж
+        payment = Payment.objects.create(
+            client=client,
+            amount=amount,
+            method_id=method_id,
+            payment_type=payment_type,
+            description=description,
+            due_date=due_date,
+            processed_by=request.user,
+            status='PENDING',
+        )
+    
+        # Если есть запись на курс, привязываем
+        enrollment_id = request.POST.get('enrollment_id')
+        if enrollment_id:
+            payment.enrollment = get_object_or_404(Enrollment, pk=enrollment_id)
+            payment.save()
+        
+        return redirect('core:payments_list')
+    
+    context = {
+        'clients': Client.objects.filter(is_active=True).order_by('last_name'),
+        'methods': PaymentMethod.objects.filter(is_active=True).order_by('name'),
+        'payment_types': Payment.PAYMENT_TYPE_CHOICES,
+        'action': 'create',
+    }
+    
+    return render(request, 'payments/payment_form.html', context)
+
+
+@login_required
+def payment_detail(request, payment_id):
+    """Детальная страница платежа"""
+    
+    user_roles = RoleAssignment.objects.filter(user=request.user, is_primary=True).select_related('role').first()
+    
+    # Проверка прав
+    if not request.user.is_superuser and user_roles and not user_roles.role.can_view_finance:
+        return redirect('core:dashboard')
+    
+    payment = get_object_or_404(Payment.objects.select_related('client', 'method', 'enrollment', 'contract'), pk=payment_id)
+    
+    context = {
+        'payment': payment,
+    }
+    
+    return render(request, 'payments/payment_detail.html', context)
+
+
+@login_required
+def payment_update(request, payment_id):
+    """Редактирование платежа"""
+    
+    user_roles = RoleAssignment.objects.filter(user=request.user, is_primary=True).select_related('role').first()
+    
+    # Проверка прав
+    if not request.user.is_superuser and user_roles and not user_roles.role.can_edit_clients:
+        return redirect('core:dashboard')
+    
+    payment = get_object_or_404(Payment, pk=payment_id)
+    
+    if request.method == 'POST':
+        payment.amount = Decimal(request.POST.get('amount', payment.amount))
+        payment.method_id = request.POST.get('method_id')
+        payment.payment_type = request.POST.get('payment_type', payment.payment_type)
+        payment.description = request.POST.get('description', payment.description)
+        payment.status = request.POST.get('status', payment.status)
+        
+        due_date_str = request.POST.get('due_date')
+        if due_date_str:
+            from datetime import datetime
+            try:
+                payment.due_date = datetime.strptime(due_date_str, '%Y-%m-%d').date()
+            except (ValueError, TypeError):
+                pass
+        
+        payment.save()
+        return redirect('core:payment_detail', payment_id=payment.pk)
+    
+    context = {
+        'payment': payment,
+        'methods': PaymentMethod.objects.filter(is_active=True).order_by('name'),
+        'payment_types': Payment.PAYMENT_TYPE_CHOICES,
+        'statuses': Payment.STATUS_CHOICES,
+        'action': 'update',
+    }
+    
+    return render(request, 'payments/payment_form.html', context)
+
+
+@login_required
+def payment_delete(request, payment_id):
+    """Удаление платежа"""
+    
+    user_roles = RoleAssignment.objects.filter(user=request.user, is_primary=True).select_related('role').first()
+    
+    # Проверка прав
+    if not request.user.is_superuser and user_roles and not user_roles.role.can_edit_clients:
+        return redirect('core:dashboard')
+    
+    payment = get_object_or_404(Payment, pk=payment_id)
+    
+    if request.method == 'POST':
+        payment_id = payment.pk
+        payment.delete()
+        return redirect('core:payments_list')
+    
+    return render(request, 'payments/payment_confirm_delete.html', {'payment': payment})
+
+
+@login_required
+def payment_pay(request, payment_id):
+    """Отметить платёж как оплаченный"""
+    
+    user_roles = RoleAssignment.objects.filter(user=request.user, is_primary=True).select_related('role').first()
+    
+    # Проверка прав
+    if not request.user.is_superuser and user_roles and not user_roles.role.can_edit_clients:
+        return redirect('core:dashboard')
+    
+    payment = get_object_or_404(Payment, pk=payment_id)
+    
+    if request.method == 'POST':
+        payment.status = 'COMPLETED'
+        payment.paid_at = timezone.now()
+        payment.paid_amount = payment.amount
+        payment.save()
+        return redirect('core:payment_detail', payment_id=payment.pk)
+    
+    return render(request, 'payments/payment_pay.html', {'payment': payment})
 
 
 @login_required
